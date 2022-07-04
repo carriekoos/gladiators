@@ -1,0 +1,6 @@
+# binaries
+target/
+*/target/
+
+# editors
+.idea/

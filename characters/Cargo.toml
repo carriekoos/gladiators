@@ -1,0 +1,15 @@
+[package]
+name = "gladiators"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "characters_lib"
+path = "src/characters_lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/bin/main.rs"
+
+[dependencies]
+log = "0.4.14"

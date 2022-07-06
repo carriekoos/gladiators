@@ -47,13 +47,16 @@ impl Character {
 
     /// lowers hp based on amount of damage
     pub fn receive_damage(&mut self, amount: u16) {
+        let modified_damage = if amount < self.armor {
+            0
+        } else {
+            amount - self.armor
+        };
 
-        // TODO take ARMOR into account here.
-
-        if self.current_hp < amount {
+        if self.current_hp < modified_damage {
             self.current_hp = 0;
         } else {
-            self.current_hp = self.current_hp - amount;
+            self.current_hp = self.current_hp - modified_damage;
         }
 
         if self.current_hp == 0 {
@@ -78,6 +81,14 @@ impl Character {
         } else {
             self.current_hp = self.max_hp;
         }
+    }
+
+    /// determines and returns amount of damage that the character
+    /// would deal to another character
+    pub fn get_damage(&self) -> u16 {
+        let adjusted_damage_amount = self.damage_amount + self.level;
+
+        return adjusted_damage_amount;
     }
 }
 

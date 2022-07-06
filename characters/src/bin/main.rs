@@ -19,7 +19,7 @@ fn main() {
         level: 2,
         damage_amount: 110,
         damage_type: "smelly".to_string(),
-        armor: 0,
+        armor: 50,
     };
     let quark_dog = Character {
         name: "Quark".to_string(),

@@ -104,10 +104,12 @@ fn spawn_gladiator(
     asset_server: &Res<AssetServer>,
     texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
 ) {
+    // grab a different spritesheet based on gladiator_idx
     let path = format!(
         "{}{}",
         GLADIATOR_SPRITES_PATH, GLADIATOR_SPRITES[gladiator_idx as usize]
     );
+
     let texture_handle = asset_server.load(&path);
     // The values used in the next function are specific to the Puny Characters sprite sheets
     let texture_atlas = TextureAtlas::from_grid(
@@ -143,6 +145,7 @@ fn gladiator_movement(
         animation.animation_type = AnimationType::Walk;
 
         // maintain either left or right, otherwise default to left
+        // This movement is just a placeholder until they get path planning.
         let mut x_movement: i16 = -1;
         (animation.animation_direction, x_movement) = match animation.animation_direction {
             AnimationDirection::Down => (AnimationDirection::Left, -1),
@@ -186,19 +189,19 @@ fn player_movement(
     let mut x_movement: i16 = 0;
     let mut y_movement: i16 = 0;
 
-    if keyboard_input.pressed(KeyCode::W) {
+    if keyboard_input.pressed(KeyCode::W) || keyboard_input.pressed(KeyCode::Up) {
         y_movement += 1;
     }
 
-    if keyboard_input.pressed(KeyCode::S) {
+    if keyboard_input.pressed(KeyCode::S) || keyboard_input.pressed(KeyCode::Down) {
         y_movement -= 1;
     }
 
-    if keyboard_input.pressed(KeyCode::D) {
+    if keyboard_input.pressed(KeyCode::D) || keyboard_input.pressed(KeyCode::Right) {
         x_movement += 1;
     }
 
-    if keyboard_input.pressed(KeyCode::A) {
+    if keyboard_input.pressed(KeyCode::A) || keyboard_input.pressed(KeyCode::Left) {
         x_movement -= 1;
     }
 

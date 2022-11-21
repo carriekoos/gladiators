@@ -1,4 +1,8 @@
 use bevy::{prelude::*, time::FixedTimestep, window::PresentMode};
+
+use crate::animation::*;
+use crate::gladiator::*;
+use crate::player::*;
 use game_lib::*; // lol just until I figure out how to organize using plugins
 
 /// This is the main function that runs the game.
@@ -210,6 +214,8 @@ fn player_movement(
     } else {
         animation.animation_type = AnimationType::Walk
     }
+
+    // boundary detection adjusts x and y movement to 0
 
     // adjust direction
     animation.animation_direction =

@@ -1,4 +1,3 @@
-use bevy::render::render_resource::Texture;
 use bevy::{prelude::*, window::PresentMode};
 
 use crate::animation::*;

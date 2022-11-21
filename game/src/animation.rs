@@ -1,5 +1,34 @@
 use bevy::prelude::*;
 
+use crate::gladiator::*;
+
+pub fn animate_sprite(
+    time: Res<Time>,
+    mut query: Query<
+        (
+            // give me all the entities
+            &mut AnimationTimer,     // with an AnimationTimer,
+            &mut TextureAtlasSprite, // a TextureAtlasSprite,
+            &mut Animation,
+        ),
+        With<Gladiator>,
+    >,
+) {
+    // single_mut() works right now because we only have one Player entity
+    for (mut timer, mut sprite, mut animation) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            sprite.index = animation.get_sprite_index(); // this can change it to 0
+            animation.frame_index += 1; // but then without _seeing_ 0, it gets incremented
+            let (start, end) = animation.animation_type.get_animation_type_indices();
+
+            if animation.frame_index > end - start {
+                animation.frame_index = 0;
+            }
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct Animation {
     /// Describes which animation is happening

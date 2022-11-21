@@ -10,6 +10,13 @@ pub mod player;
 
 pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 pub const ANIMATION_STEP: f32 = 0.15;
+
+/// Player constants
+/// starting coordinates of player
+pub const PLAYER_START_X: f32 = -300.0;
+pub const PLAYER_START_Y: f32 = -200.0;
+
+/// Gladiator constants
 pub const MOVEMENT_STEP: f32 = 1.0 / 60.0; // warning, this is related to PLAYER_SPEED
 pub const N_GLADIATORS: i32 = 5;
 pub const GLADIATOR_SPEED: usize = 4; // warning, this is related to MOVEMENT_STEP

@@ -1,114 +1,5 @@
-use bevy::{prelude::*, render::texture, time::FixedTimestep, window::PresentMode};
-use leafwing_input_manager::prelude::*;
-
-pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
-pub const ANIMATION_STEP: f32 = 0.15;
-pub const MOVEMENT_STEP: f32 = 1.0 / 60.0; // warning, this is related to PLAYER_SPEED
-pub const GLADIATOR_SPEED: usize = 4; // warning, this is related to MOVEMENT_STEP
-pub const GLADIATOR_SIZE: f32 = 4.0; // this scales the size of the sprite - lower once there are many
-
-#[derive(Component, Deref, DerefMut)]
-struct AnimationTimer(Timer);
-
-#[derive(Component)]
-struct Player;
-
-#[derive(Component)]
-struct Gladiator;
-
-#[derive(Component)]
-struct Movement {
-    speed: usize,
-}
-
-#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
-enum Action {
-    Move,
-}
-
-#[derive(Component)]
-pub struct Animation {
-    /// Describes which animation is happening
-    animation_type: AnimationType,
-    /// Describes the direction that the sprite is facing
-    animation_direction: AnimationDirection,
-    /// Describes which frame of the series of images comprising an animation
-    frame_index: usize,
-}
-
-impl Animation {
-    pub fn get_sprite_index(&mut self) -> usize {
-        let row_idx = self.animation_direction as usize;
-        let (start, end) = self.animation_type.get_animation_type_indices();
-
-        if self.frame_index > end - start {
-            self.frame_index = 0;
-            println!("other spot frame_index: {}", self.frame_index);
-        }
-
-        let col_idx = start + self.frame_index;
-
-        (row_idx * 24) + col_idx
-    }
-}
-
-pub enum AnimationType {
-    Idle,
-    Walk,
-    Sword,
-    Bow,
-    Staff,
-    Throw,
-    Hurt,
-    Death,
-}
-
-impl AnimationType {
-    /// Returns the sprite animation indices from the sprite sheet row
-    pub fn get_animation_type_indices(&self) -> (usize, usize) {
-        match self {
-            Self::Idle => (0, 1),
-            Self::Walk => (2, 3),
-            Self::Sword => (4, 7),
-            Self::Bow => (8, 11),
-            Self::Staff => (12, 14),
-            Self::Throw => (15, 17),
-            Self::Hurt => (18, 20),
-            Self::Death => (21, 23),
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum AnimationDirection {
-    Down = 0,
-    DownRight = 1,
-    Right = 2,
-    UpRight = 3,
-    Up = 4,
-    UpLeft = 5,
-    Left = 6,
-    DownLeft = 7,
-}
-
-impl AnimationDirection {
-    pub fn from_movement(x_movement: i32, y_movement: i32) -> Result<Self, String> {
-        match (x_movement, y_movement) {
-            (1, 1) => Ok(AnimationDirection::UpRight),
-            (1, 0) => Ok(AnimationDirection::Right),
-            (1, -1) => Ok(AnimationDirection::DownRight),
-            (0, 1) => Ok(AnimationDirection::Up),
-            (0, 0) => Ok(AnimationDirection::Down),
-            (0, -1) => Ok(AnimationDirection::Down),
-            (-1, 1) => Ok(AnimationDirection::UpLeft),
-            (-1, 0) => Ok(AnimationDirection::Left),
-            (-1, -1) => Ok(AnimationDirection::DownLeft),
-            _ => Err(
-                "Movement was not a unit vector and could not generate animation direction.".into(),
-            ),
-        }
-    }
-}
+use bevy::{prelude::*, time::FixedTimestep, window::PresentMode};
+use game_lib::*; // lol just until I figure out how to organize using plugins
 
 /// This is the main function that runs the game.
 fn main() {
@@ -126,7 +17,6 @@ fn main() {
                     ..default()
                 }),
         )
-        .add_plugin(InputManagerPlugin::<Action>::default())
         .add_startup_system(setup)
         .add_system_set(
             SystemSet::new()
@@ -156,7 +46,6 @@ fn setup(
     );
 
     //spawn other gladiators
-    const N_GLADIATORS: i32 = 5;
     for i in 0..N_GLADIATORS {
         let coordinate = (50 * i) as f32;
         spawn_gladiator(
@@ -193,28 +82,19 @@ fn spawn_player(
 
     // Note: When spawning an entity, you call commands.spawn() and then chain .insert() over and over,
     // adding additional components to that entity. Order doesn't matter.
+    // You can also construct a bundle to make it easier to call .insert() once per logical concept.
+    // I did this for PlayerBundle and GladiatorBundle so that I didn't have to add each of their
+    // Components one by one.
     // Call spawn() again for a new entity.
     //
     // spawn player
     commands
-        .spawn((
-            SpriteSheetBundle {
-                texture_atlas: texture_atlas_handle,
-                transform,
-                ..default()
-            },
-            AnimationTimer(Timer::from_seconds(ANIMATION_STEP, TimerMode::Repeating)),
-        ))
-        .insert(Player)
-        .insert(Gladiator)
-        .insert(Movement {
-            speed: GLADIATOR_SPEED,
-        })
-        .insert(Animation {
-            animation_type: AnimationType::Idle,
-            animation_direction: AnimationDirection::Down,
-            frame_index: 0,
-        });
+        .spawn((SpriteSheetBundle {
+            texture_atlas: texture_atlas_handle,
+            transform,
+            ..default()
+        },))
+        .insert(PlayerBundle::new());
 }
 
 fn spawn_gladiator(
@@ -224,16 +104,9 @@ fn spawn_gladiator(
     asset_server: &Res<AssetServer>,
     texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
 ) {
-    let gladiator_sprites = [
-        "Soldier-Blue.png",
-        "Soldier-Red.png",
-        "Soldier-Yellow.png",
-        "Archer-Green.png",
-        "Archer-Purple.png",
-    ];
     let path = format!(
-        "Puny-Characters/{}",
-        gladiator_sprites[gladiator_idx as usize]
+        "{}{}",
+        GLADIATOR_SPRITES_PATH, GLADIATOR_SPRITES[gladiator_idx as usize]
     );
     let texture_handle = asset_server.load(&path);
     // The values used in the next function are specific to the Puny Characters sprite sheets
@@ -252,23 +125,12 @@ fn spawn_gladiator(
     transform.translation = location.extend(1.0);
 
     commands
-        .spawn((
-            SpriteSheetBundle {
-                texture_atlas: texture_atlas_handle,
-                transform,
-                ..default()
-            },
-            AnimationTimer(Timer::from_seconds(ANIMATION_STEP, TimerMode::Repeating)),
-        ))
-        .insert(Gladiator)
-        .insert(Movement {
-            speed: GLADIATOR_SPEED,
+        .spawn(SpriteSheetBundle {
+            texture_atlas: texture_atlas_handle,
+            transform,
+            ..default()
         })
-        .insert(Animation {
-            animation_type: AnimationType::Idle,
-            animation_direction: AnimationDirection::Down,
-            frame_index: 0,
-        });
+        .insert(GladiatorBundle::new());
 }
 
 fn gladiator_movement(

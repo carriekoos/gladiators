@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, time::FixedTimestep};
 
 use crate::{animation::*, player::*, *};
 
@@ -6,7 +6,11 @@ pub struct GladiatorPlugin;
 
 impl Plugin for GladiatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_gladiators);
+        app.add_startup_system(spawn_gladiators).add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
+                .with_system(gladiator_movement),
+        );
     }
 }
 
@@ -67,7 +71,7 @@ fn spawn_one_gladiator(
 }
 
 /// Moves gladiators not controlled by the player
-pub fn gladiator_movement(
+fn gladiator_movement(
     mut query: Query<
         (&mut Transform, &Movement, &mut Animation),
         (With<Gladiator>, Without<Player>),

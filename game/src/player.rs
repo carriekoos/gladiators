@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, time::FixedTimestep};
 
 use crate::{animation::*, gladiator::*, *};
 
@@ -6,7 +6,11 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_player);
+        app.add_startup_system(spawn_player).add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
+                .with_system(player_movement),
+        );
     }
 }
 
@@ -50,7 +54,7 @@ fn spawn_player(
 }
 
 /// Moves the gladiator controlled by the player
-pub fn player_movement(
+fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &Movement, &mut Animation), With<Player>>,
 ) {

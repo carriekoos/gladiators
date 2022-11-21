@@ -1,4 +1,4 @@
-use bevy::{prelude::*, time::FixedTimestep, window::PresentMode};
+use bevy::{prelude::*, window::PresentMode};
 
 use crate::animation::*;
 use crate::gladiator::*;
@@ -24,12 +24,6 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(GladiatorPlugin)
         .add_startup_system(setup)
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
-                .with_system(gladiator_movement)
-                .with_system(player_movement),
-        )
         .add_system(animate_sprite)
         .run();
 }

@@ -109,7 +109,7 @@ fn gladiator_movement(
         // apply the movement
         let y_movement: i16 = 0;
         let translation_delta =
-            Vec3::new(x_movement.into(), y_movement.into(), 0.0) * movement.speed as f32;
+            Vec3::new(x_movement.into(), y_movement.into(), 0.0) * movement.speed;
         transform.translation += translation_delta;
     }
 }
@@ -120,7 +120,7 @@ pub struct AnimationTimer(Timer);
 
 #[derive(Component)]
 pub struct Movement {
-    pub speed: usize,
+    pub speed: f32,
 }
 
 #[derive(Component)]

@@ -22,10 +22,10 @@ fn spawn_grid() {}
 fn evaluate_grid() {}
 
 // TODO I think the grid is a resource, not a component
-
+#[derive(Eq, Hash, PartialEq)]
 pub struct GridLocation {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
 }
 
 /// ArenaGrid stores a Vec of Entitys that are located at each
@@ -65,4 +65,87 @@ pub struct ArenaGrid {
     // Store the Entity in this hashmap. Then any query that would contain
     // this Entity, can just use query.get(Entity) instead of looping through
     // the entire query.
+}
+
+impl ArenaGrid {
+    /// Takes x,y coordinates and returns the GridLocation.
+    /// Normalized for window size with given number of divisions.
+    /// TODO This could probably take into account the gladiator size
+    /// as well as the window size and not need so many constants.
+    /// * `x`: pixel coordinate in x direction
+    /// * `y`: pixel coordinate in y direction
+    pub fn get_grid_location(x: f32, y: f32) -> GridLocation {
+        // TODO - turn these into lazy statics so that we don't have to compute this so many times.
+        let grid_cell_width = WINDOW_WIDTH / GRID_HORIZONTAL_DIVISIONS;
+        let n_vertical_divisions = GRID_HORIZONTAL_DIVISIONS * (WINDOW_HEIGHT / WINDOW_WIDTH);
+        let grid_cell_height = WINDOW_HEIGHT / n_vertical_divisions;
+
+        let x_grid_num = ((x.abs() / grid_cell_width) + 0.5).floor();
+        let horizontal_grid_location = (x.signum() * x_grid_num) as i32;
+
+        let y_grid_num = ((y.abs() / grid_cell_height) + 0.5).floor();
+        let vertical_grid_location = (y.signum() * y_grid_num) as i32;
+
+        GridLocation {
+            x: horizontal_grid_location,
+            y: vertical_grid_location,
+        }
+    }
+
+    /// Returns a Vec of Entitys that are currently located in the
+    /// given grid location.
+    /// * `loc`: grid location in question
+    pub fn get_gladiators_in_grid_location(&self, loc: &GridLocation) -> Vec<Entity> {
+        match self.grid_map.get(loc) {
+            Some(vec) => vec.clone(),
+            None => vec![],
+        }
+    }
+
+    /// Returns a Vec off all adjacent grid locations to the given location
+    /// * `loc`: grid location in question
+    fn get_adjacent_grid_locations(loc: &GridLocation) -> Vec<GridLocation> {
+        let mut grid_locations = Vec::new();
+        // list the xs and the ys, do combinatorics, remove item == loc
+        let possible_x = vec![loc.x - 1, loc.x, loc.x + 1];
+        let possible_y = vec![loc.y - 1, loc.y, loc.y + 1];
+
+        for x in possible_x {
+            for y in &possible_y {
+                // Don't add the starting grid location
+                // if (x, y) == (loc.x, loc.y) { continue } // or add and remove later
+                grid_locations.push(GridLocation { x, y: y.clone() }) // thought Copy would avoid the clone()
+            }
+        }
+
+        // Removing the specific element from the Vec is probably slower, but
+        // I'll have to do this pattern for removing an Entity from the map in
+        // this struct, so I'm leaving this as an example for later. I will
+        // uncomment the above if when I'm done having the example here.
+        grid_locations.retain(|x| *x != *loc);
+
+        grid_locations
+    }
+
+    /// Returns a HashMap indicating the Entitys in each of the adjacent grid locations
+    /// * `loc`: grid location in question
+    pub fn get_gladiators_in_adjacent_grid_locations(
+        &self,
+        loc: GridLocation,
+    ) -> HashMap<GridLocation, Vec<Entity>> {
+        let mut map = HashMap::new();
+
+        // populate the map with the Vec of Entitys currently at each location
+        let grid_locations = Self::get_adjacent_grid_locations(&loc);
+        for location in grid_locations {
+            let entities = match self.grid_map.get(&loc) {
+                Some(vec) => vec.clone(),
+                None => vec![],
+            };
+
+            map.insert(location, entities);
+        }
+
+        map
+    }
 }

@@ -5,14 +5,12 @@ pub mod gladiator;
 pub mod grid;
 pub mod player;
 
-/// Dumping all of the structs into a lib for a pinch of organization.
-/// This should be further broken into plugins, but I don't know how
-/// to do that yet ¯\_(ツ)_/¯
-
-pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
+// TODO several of these constsants could be pushed into a lazy static to deal with their coupling.
+// probably several of them could be calculated based on the number of gladiators relative to the
+// window size.
 
 /// Grid constants
-pub const HORIZONTAL_DIVISIONS: f32 = 20.; // vertical divisions calculated by this * (window) height/width
+pub const GRID_HORIZONTAL_DIVISIONS: f32 = 24.; // vertical divisions calculated by this * (window) height/width
 pub const GRID_EVALUATION_STEP: f32 = 1.0 / 30.0;
 
 /// Game window constants
@@ -20,6 +18,7 @@ pub const WINDOW_WIDTH: f32 = 1280.;
 pub const WINDOW_HEIGHT: f32 = 720.;
 pub const BACKGROUND_WIDTH: f32 = 6020.;
 pub const BACKGROUND_HEIGHT: f32 = 3920.;
+pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
 
 /// Animation constants
 pub const ANIMATION_STEP: f32 = 0.15;
@@ -31,9 +30,9 @@ pub const PLAYER_START_Y: f32 = -200.0;
 
 /// Gladiator constants
 pub const MOVEMENT_STEP: f32 = 1.0 / 60.0; // warning, this is related to GLADIATOR_SPEED
-pub const N_GLADIATORS: i32 = 5;
-pub const GLADIATOR_SPEED: usize = 4; // warning, this is related to MOVEMENT_STEP
-pub const GLADIATOR_SIZE: f32 = 2.5; // this scales the size of the sprite - lower once there are many
+pub const N_GLADIATORS: i32 = 5; // for now this can't be larger than the length of GLADIATOR_SPRITES
+pub const GLADIATOR_SPEED: f32 = 2.; // warning, this is related to MOVEMENT_STEP and GLADIATOR_SIZE
+pub const GLADIATOR_SIZE: f32 = 1.5; // this scales the size of the sprite() - lower once there are many
 pub const GLADIATOR_SPRITES_PATH: &str = "Puny-Characters/";
 // Just starting with a few of the sprites initially
 pub const GLADIATOR_SPRITES: [&str; 5] = [

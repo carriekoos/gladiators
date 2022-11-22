@@ -1,6 +1,6 @@
 use bevy::{prelude::*, time::FixedTimestep};
 
-use crate::{animation::*, gladiator::*, *};
+use crate::{animation::*, gladiator::*, grid::*, *};
 
 pub struct PlayerPlugin;
 
@@ -121,10 +121,29 @@ fn player_movement(
             }
         };
 
+    // determine previous grid location
+    let prev_grid_location =
+        ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
+
     // translate
     let translation_delta =
         Vec3::new(x_movement.into(), y_movement.into(), 0.0) * movement.speed as f32;
     transform.translation += translation_delta;
+
+    // determine current grid location
+    let current_grid_location =
+        ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
+
+    // emit event if entering a new grid location
+    if current_grid_location != prev_grid_location {
+        // TODO emit the event
+        println!(
+            "player at: x {} | y: {}",
+            current_grid_location.x, current_grid_location.y
+        );
+    }
+
+    // For the player, I don't think that I need to do anything else.
 }
 
 #[derive(Component)]

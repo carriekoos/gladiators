@@ -95,13 +95,13 @@ fn gladiator_movement(
         };
 
         // if too far left, go right
-        if transform.translation[0] < -300.0 {
+        if transform.translation[0] < -WINDOW_WIDTH / 2. {
             animation.animation_direction = AnimationDirection::Right;
             x_movement = 1;
         }
 
         // if too far right, go left
-        if transform.translation[0] > 300.0 {
+        if transform.translation[0] > WINDOW_WIDTH / 2. {
             animation.animation_direction = AnimationDirection::Left;
             x_movement = -1;
         }

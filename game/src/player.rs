@@ -87,7 +87,26 @@ fn player_movement(
         animation.animation_type = AnimationType::Walk
     }
 
-    // boundary detection adjusts x and y movement to 0
+    // boundary detection adjusts x and y to head away from boundary
+    // too far left
+    if transform.translation[0] < -WINDOW_WIDTH / 2. {
+        x_movement = 1;
+    }
+
+    // too far right
+    if transform.translation[0] > WINDOW_WIDTH / 2. {
+        x_movement = -1;
+    }
+
+    // too far down
+    if transform.translation[1] < -WINDOW_HEIGHT / 2. {
+        y_movement = 1;
+    }
+
+    // too far up
+    if transform.translation[1] > WINDOW_HEIGHT / 2. {
+        y_movement = -1;
+    }
 
     // adjust direction
     animation.animation_direction =

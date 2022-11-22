@@ -16,8 +16,8 @@ fn main() {
                         title: "Gladiators".into(),
                         present_mode: PresentMode::Fifo,
                         resizable: false,
-                        width: 1280.,
-                        height: 720.,
+                        width: WINDOW_WIDTH,
+                        height: WINDOW_HEIGHT,
                         ..default()
                     },
                     ..default()
@@ -34,7 +34,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn(SpriteBundle {
         texture: asset_server.load("arena.png"),
-        transform: Transform::from_scale(Vec3::new(0.2126, 0.18367, 0.0)), // so not how to do this.
+        transform: Transform::from_scale(
+            //this. is a hack.
+            Vec3::new(
+                WINDOW_WIDTH / BACKGROUND_WIDTH,
+                WINDOW_HEIGHT / BACKGROUND_HEIGHT,
+                -900.0,
+            ),
+        ),
         ..Default::default()
     });
 }

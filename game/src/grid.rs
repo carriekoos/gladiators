@@ -4,25 +4,39 @@ use bevy::{prelude::*, time::FixedTimestep};
 
 use crate::{animation::*, gladiator::*, *};
 
+// pub struct GridChangeEvent(pub Entity);
+#[derive(Debug)]
+pub struct GridChangeEvent {
+    pub entity: Entity,
+    pub prev_loc: GridLocation,
+    pub curr_loc: GridLocation,
+}
+
 pub struct GridPlugin;
 
 impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_grid).add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(GRID_EVALUATION_STEP as f64))
-                .with_system(evaluate_grid),
-        );
+        app.add_startup_system(spawn_grid)
+        .add_event::<GridChangeEvent>()
+        .add_system(evaluate_grid)
+        .init_resource::<ArenaGrid>();
     }
 }
 
 /// Spawns the grid
 fn spawn_grid() {}
 
-fn evaluate_grid() {}
+fn evaluate_grid(
+    mut ev_grid_change: EventReader<GridChangeEvent>,
+    mut griddy: ResMut<ArenaGrid>
+) {
+    for read in ev_grid_change.iter() {
+        griddy.update_entity_location(read.entity, &read.prev_loc, &read.curr_loc);
+        println!("Grid got grid change event from {:?}", read);
+    }
+}
 
-// TODO I think the grid is a resource, not a component
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, Eq, Hash, PartialEq)]
 pub struct GridLocation {
     pub x: i32,
     pub y: i32,
@@ -59,6 +73,7 @@ pub struct GridLocation {
 /// 1. Entity of Gladiator(unengaged) in the same GridLocation. (can engage)
 /// 2. Entities of Gladiators(unengaged) in any of the adjacent
 ///  GridLocations. (will move towards)
+#[derive(Resource, Default, Debug)]
 pub struct ArenaGrid {
     grid_map: HashMap<GridLocation, Vec<Entity>>,
     // https://docs.rs/bevy/latest/bevy/prelude/struct.Query.html#method.get
@@ -147,5 +162,52 @@ impl ArenaGrid {
         }
 
         map
+    }
+
+    fn update_entity_location(
+        &mut self,
+        entity: Entity,
+        prev_loc: &GridLocation,
+        curr_loc: &GridLocation,
+    ) {
+        match self.grid_map.get_mut(prev_loc) {
+            Some(entities_vec) => {
+                entities_vec.retain(|x| *x != entity)
+            }
+            None => warn!("{:?} does not exist, only updating new location", prev_loc),
+        }
+
+        match self.grid_map.get_mut(curr_loc) {
+            Some(entities_vec) => {
+                entities_vec.push(entity);
+            }
+            None => {
+                self.grid_map.insert(curr_loc.clone(), vec![entity]);
+            }
+        }
+    }
+
+    fn get_colocated_gladiators(&self) -> Vec<(Entity, Entity)> {
+        // let mut gladiator_a = None;
+        // let mut gladiator_b = None;
+        // for gladiator in gladiators_vec {
+        //     match gladiator_a {
+        //         None => {
+        //             gladiator_a = gladiator
+        //         }
+        //         Some(gladiator) => {
+        //             gladiator_b = gladiator
+        //         }
+        //     }
+        // }
+
+
+
+        self.grid_map.values().filter_map(|entities|
+            if entities.len() >= 2 {
+                Some((entities[0], entities[1]))
+            } else {
+                None
+            })
     }
 }

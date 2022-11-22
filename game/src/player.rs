@@ -2,6 +2,19 @@ use bevy::{prelude::*, time::FixedTimestep};
 
 use crate::{animation::*, gladiator::*, grid::*, *};
 
+/// Just some notes about where this part of the project is going:
+/// What is the advantage/strategy that the Player has over other Gladiators?
+/// 1. Delay between engagements to restore health
+/// 2. Go after appropriate targets - can intuit this based on size of sprite
+///  if level can inform sprite scale (it so can)
+/// 3. Switch weapons? - probably should be available for everyone.
+/// 4. Go after items? - also maybe should be for everyone?
+/// Want to make sure that we're not deliberately hamstringing the other
+/// Gladiators in a weird way that doesn't make a lot of sense.
+/// The AI doesn't need to be overly sophisticated, but maybe shouldn't
+/// be completely stupid.
+
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -56,10 +69,11 @@ fn spawn_player(
 /// Moves the gladiator controlled by the player
 fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform, &Movement, &mut Animation), With<Player>>,
+    mut ev_grid_change: EventWriter<GridChangeEvent>,
+    mut query: Query<(&mut Transform, &Movement, &mut Animation, Entity), With<Player>>,
 ) {
     // we know single_mut() works because we're only spawning one player right now.
-    let (mut transform, movement, mut animation) = query.single_mut();
+    let (mut transform, movement, mut animation, entity) = query.single_mut();
 
     // get movement input
     let mut x_movement: i16 = 0;
@@ -136,15 +150,17 @@ fn player_movement(
 
     // emit event if entering a new grid location
     if current_grid_location != prev_grid_location {
-        // TODO emit the event
         println!(
             "player at: x {} | y: {}",
             current_grid_location.x, current_grid_location.y
         );
+        ev_grid_change.send(GridChangeEvent{entity, prev_loc: prev_grid_location, curr_loc: current_grid_location,});
+
     }
 
     // For the player, I don't think that I need to do anything else.
 }
+
 
 #[derive(Component)]
 pub struct Player;

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 pub mod animation;
+pub mod engagements;
 pub mod gladiator;
 pub mod grid;
 pub mod player;

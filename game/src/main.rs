@@ -1,9 +1,27 @@
 use bevy::{prelude::*, window::PresentMode};
+use game_lib::grid::GridPlugin;
 
 use crate::animation::*;
 use crate::gladiator::*;
 use crate::player::*;
 use game_lib::*;
+
+/// Road Map (in no particular order)
+/// 1. Pause menu/button (space) - rename character menu
+/// 2. Path planning system for Gladiators
+/// 3. Gladiator engagements/debug display - DO FIRST!
+/// 4. Combat system
+/// 5. Death system
+/// 6. Experience/leveling system
+/// 7. Skills system
+/// 8. Healing system
+/// 9. Items system
+/// 10. Start Game menu - Make easy to disable for development
+/// 11. Grid update event system
+///   https://bevy-cheatbook.github.io/programming/events.html
+///   Events seem like a many to many pub-sub system and the
+///   "topics" are basically the Rust Types?
+/// 
 
 /// This is the main function that runs the game.
 fn main() {
@@ -23,6 +41,7 @@ fn main() {
                     ..default()
                 }),
         )
+        .add_plugin(GridPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(GladiatorPlugin)
         .add_startup_system(setup)

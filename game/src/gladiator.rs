@@ -1,6 +1,6 @@
 use bevy::{prelude::*, time::FixedTimestep};
 
-use crate::{animation::*, player::*, *};
+use crate::{animation::*, engagements::*, player::*, *};
 
 pub struct GladiatorPlugin;
 
@@ -10,8 +10,28 @@ impl Plugin for GladiatorPlugin {
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
                 .with_system(gladiator_movement),
-        );
+        )
+        .add_system(gladiator_combat);
     }
+}
+
+fn gladiator_combat(
+    &mut engagements_query: Query<&Engagement>,
+    &mut gladiators_query: Query<&Gladiators, &mut Health>,
+) {
+    for engagement in &query {
+        // now what do I do with them?
+        println!("{} and {} are engaged in combat!", engagement.gladiator_a, engagement.gladiator_b);
+        let a = gladiators_query.get(engagement.gladiator_a);
+        do_combat(a, b);
+    }
+}
+
+fn do_combat(
+    a: Entity,
+    b: Entity,
+) {
+    asdf
 }
 
 fn spawn_gladiators(
@@ -125,6 +145,12 @@ pub struct Movement {
 
 #[derive(Component)]
 pub struct Gladiator;
+
+#[derive(Component)]
+pub struct Health(f32);
+
+#[derive(Component)]
+pub struct Attack(f32);
 
 #[derive(Bundle)]
 pub struct GladiatorBundle {

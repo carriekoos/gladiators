@@ -6,33 +6,55 @@ pub struct GladiatorPlugin;
 
 impl Plugin for GladiatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_gladiators).add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
-                .with_system(gladiator_movement),
-        )
-        .add_system(gladiator_combat);
+        app.add_startup_system(spawn_gladiators)
+            .add_system_set(
+                SystemSet::new()
+                    .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
+                    .with_system(gladiator_movement),
+            )
+            .add_system(gladiator_combat);
     }
 }
 
 fn gladiator_combat(
-    &mut engagements_query: Query<&Engagement>,
-    &mut gladiators_query: Query<&Gladiators, &mut Health>,
+    engagement_query: Query<&Engagement>,
+    mut gladiator_query: Query<(&mut Health, &mut Level, &Attack, &Defense), With<Gladiator>>,
 ) {
-    for engagement in &query {
-        // now what do I do with them?
-        println!("{} and {} are engaged in combat!", engagement.gladiator_a, engagement.gladiator_b);
-        let a = gladiators_query.get(engagement.gladiator_a);
-        do_combat(a, b);
+    for engagement in &engagement_query {
+        let (mut health_a, mut level_a, attack_a, defense_a) = gladiator_query
+            .get_mut(engagement.gladiator_a)
+            .expect("A gladiator in an engagement should exist in the ECS");
+        let (mut health_b, mut level_b, attack_b, defense_b) = gladiator_query
+            .get_mut(engagement.gladiator_b)
+            .expect("A gladiator in an engagement should exist in the ECS");
+
+        // TODO So I can't do both querys at the same time with mutable reference. I could just get the data, perform logic, returning the new data, then
+        //  get mutable reference again to one at a time mutate, bounded by little mini scopes. hmmmm, don't love it.
+        // do_combat(
+        //     health_a,
+        //     level_a,
+        //     attack_a,
+        //     defense_a,
+        //     &mut *health_b,
+        //     &mut *level_b,
+        //     attack_b,
+        //     defense_b,
+        // );
     }
 }
 
-fn do_combat(
-    a: Entity,
-    b: Entity,
-) {
-    asdf
-}
+// fn do_combat(
+//     &mut health_a: &mut Health,
+//     level_a: &mut Level,
+//     attack_a: &Attack,
+//     defense_a: &Defense,
+//     health_b: &mut Health,
+//     level_b: &mut Level,
+//     attack_b: &Attack,
+//     defense_b: &Defense,
+// ) {
+//     // do stuff
+// }
 
 fn spawn_gladiators(
     mut commands: Commands,
@@ -147,17 +169,46 @@ pub struct Movement {
 pub struct Gladiator;
 
 #[derive(Component)]
-pub struct Health(f32);
+pub struct Health{
+    value: f32
+}
 
 #[derive(Component)]
-pub struct Attack(f32);
+pub struct Attack {
+    damage: f32,
+}
+
+#[derive(Component)]
+pub struct Defense(f32);
+
+#[derive(Component)]
+pub struct Level {
+    level: usize,
+    xp: f32,
+}
+
+pub enum GladiatorEngagementStatus {
+    Engaged,
+    Unengaged,
+}
+
+#[derive(Component)]
+pub struct GladiatorEngagement{
+    pub status: GladiatorEngagementStatus
+}
 
 #[derive(Bundle)]
 pub struct GladiatorBundle {
+    // needs Health, Level, Attack, and Defense
     gladiator: Gladiator,
     movement: Movement,
     animation: Animation,
     animation_timer: AnimationTimer,
+    health: Health,
+    level: Level,
+    attack: Attack,
+    defense: Defense,
+    engagement: GladiatorEngagement,
 }
 
 impl GladiatorBundle {
@@ -177,6 +228,18 @@ impl GladiatorBundle {
                 ANIMATION_STEP,
                 TimerMode::Repeating,
             )),
+            health: Health{ value: 10.0 },
+            level: Level {
+                level: 1,
+                xp: 0.,
+            },
+            attack: Attack{
+                damage: 1.0
+            },
+            defense: Defense(0.1),
+            engagement: GladiatorEngagement {
+                status: GladiatorEngagementStatus::Unengaged,
+            }
         }
     }
 }

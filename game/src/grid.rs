@@ -17,19 +17,16 @@ pub struct GridPlugin;
 impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_grid)
-        .add_event::<GridChangeEvent>()
-        .add_system(evaluate_grid)
-        .init_resource::<ArenaGrid>();
+            .add_event::<GridChangeEvent>()
+            .add_system(evaluate_grid)
+            .init_resource::<ArenaGrid>();
     }
 }
 
 /// Spawns the grid
 fn spawn_grid() {}
 
-fn evaluate_grid(
-    mut ev_grid_change: EventReader<GridChangeEvent>,
-    mut griddy: ResMut<ArenaGrid>
-) {
+fn evaluate_grid(mut ev_grid_change: EventReader<GridChangeEvent>, mut griddy: ResMut<ArenaGrid>) {
     for read in ev_grid_change.iter() {
         griddy.update_entity_location(read.entity, &read.prev_loc, &read.curr_loc);
         println!("Grid got grid change event from {:?}", read);
@@ -75,7 +72,7 @@ pub struct GridLocation {
 ///  GridLocations. (will move towards)
 #[derive(Resource, Default, Debug)]
 pub struct ArenaGrid {
-    grid_map: HashMap<GridLocation, Vec<Entity>>,
+    pub grid_map: HashMap<GridLocation, Vec<Entity>>,
     // https://docs.rs/bevy/latest/bevy/prelude/struct.Query.html#method.get
     // Store the Entity in this hashmap. Then any query that would contain
     // this Entity, can just use query.get(Entity) instead of looping through
@@ -171,9 +168,7 @@ impl ArenaGrid {
         curr_loc: &GridLocation,
     ) {
         match self.grid_map.get_mut(prev_loc) {
-            Some(entities_vec) => {
-                entities_vec.retain(|x| *x != entity)
-            }
+            Some(entities_vec) => entities_vec.retain(|x| *x != entity),
             None => warn!("{:?} does not exist, only updating new location", prev_loc),
         }
 
@@ -187,27 +182,20 @@ impl ArenaGrid {
         }
     }
 
-    fn get_colocated_gladiators(&self) -> Vec<(Entity, Entity)> {
-        // let mut gladiator_a = None;
-        // let mut gladiator_b = None;
-        // for gladiator in gladiators_vec {
-        //     match gladiator_a {
-        //         None => {
-        //             gladiator_a = gladiator
-        //         }
-        //         Some(gladiator) => {
-        //             gladiator_b = gladiator
-        //         }
-        //     }
-        // }
+    // // I don't think this is helpful because we need pairs of unengaged, not pairs of colocated gladiators.
+    // fn get_colocated_gladiators(&self) -> Vec<(Entity, Entity)> {
+    //     let mut pairs = Vec::new();
 
+    //     for group in self.grid_map.values() {
+    //         let n_colocated = group.len();
+    //         let n_pairs = n_colocated / 2;
+    //         for i in 0..n_pairs {
+    //             let gladiator_a = group.get(2 * i).expect("Already checked that this index should exist.");
+    //             let gladiator_b = group.get(2 * i + 1).expect("Already checked that this index should exist.");
+    //             pairs.push((gladiator_a, gladiator_b))
+    //         }
+    //     }
 
-
-        self.grid_map.values().filter_map(|entities|
-            if entities.len() >= 2 {
-                Some((entities[0], entities[1]))
-            } else {
-                None
-            })
-    }
+    //     pairs
+    // }
 }

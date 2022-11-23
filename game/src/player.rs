@@ -14,7 +14,6 @@ use crate::{animation::*, gladiator::*, grid::*, *};
 /// The AI doesn't need to be overly sophisticated, but maybe shouldn't
 /// be completely stupid.
 
-
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -154,13 +153,15 @@ fn player_movement(
             "player at: x {} | y: {}",
             current_grid_location.x, current_grid_location.y
         );
-        ev_grid_change.send(GridChangeEvent{entity, prev_loc: prev_grid_location, curr_loc: current_grid_location,});
-
+        ev_grid_change.send(GridChangeEvent {
+            entity,
+            prev_loc: prev_grid_location,
+            curr_loc: current_grid_location,
+        });
     }
 
     // For the player, I don't think that I need to do anything else.
 }
-
 
 #[derive(Component)]
 pub struct Player;

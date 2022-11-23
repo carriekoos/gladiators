@@ -21,7 +21,7 @@ use game_lib::*;
 ///   https://bevy-cheatbook.github.io/programming/events.html
 ///   Events seem like a many to many pub-sub system and the
 ///   "topics" are basically the Rust Types?
-/// 
+///
 
 /// This is the main function that runs the game.
 fn main() {

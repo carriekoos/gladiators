@@ -2,6 +2,10 @@ use bevy::prelude::*;
 
 use crate::gladiator::*;
 
+/// TODO we can have disjoint queries here for With/Without<Engagement>
+/// With<> is going to do attack animations that could look at other data
+/// such as EquippedWeapon or something. Without<> is going to perform
+/// the movement logic already present here.
 pub fn animate_sprite(
     time: Res<Time>,
     mut query: Query<

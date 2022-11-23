@@ -12,36 +12,83 @@ impl Plugin for GladiatorPlugin {
                     .with_run_criteria(FixedTimestep::step(MOVEMENT_STEP as f64))
                     .with_system(gladiator_movement),
             )
-            .add_system(gladiator_combat);
+            .add_system(gladiator_attacks)
+            .add_system(gladiator_receive_attack);
     }
 }
 
-fn gladiator_combat(
-    engagement_query: Query<&Engagement>,
-    mut gladiator_query: Query<(&mut Health, &mut Level, &Attack, &Defense), With<Gladiator>>,
+#[derive(Debug)]
+pub struct AttackEvent {
+    pub target: Entity,
+    pub attacker: Entity,
+    pub attack: Attack,
+}
+
+fn gladiator_attacks(
+    mut ev_attack: EventWriter<AttackEvent>,
+    query: Query<(&Engagement, &Attack, Entity)>,
 ) {
-    for engagement in &engagement_query {
-        let (mut health_a, mut level_a, attack_a, defense_a) = gladiator_query
-            .get_mut(engagement.gladiator_a)
-            .expect("A gladiator in an engagement should exist in the ECS");
-        let (mut health_b, mut level_b, attack_b, defense_b) = gladiator_query
-            .get_mut(engagement.gladiator_b)
-            .expect("A gladiator in an engagement should exist in the ECS");
-
-        // TODO So I can't do both querys at the same time with mutable reference. I could just get the data, perform logic, returning the new data, then
-        //  get mutable reference again to one at a time mutate, bounded by little mini scopes. hmmmm, don't love it.
-        // do_combat(
-        //     health_a,
-        //     level_a,
-        //     attack_a,
-        //     defense_a,
-        //     &mut *health_b,
-        //     &mut *level_b,
-        //     attack_b,
-        //     defense_b,
-        // );
+    for (engagement, attack, entity) in &query {
+        ev_attack.send(AttackEvent {
+            target: engagement.target,
+            attacker: entity,
+            attack: *attack,
+        });
     }
 }
+
+fn gladiator_receive_attack(
+    mut ev_attack: EventReader<AttackEvent>,
+    mut query: Query<(&mut Health, &Defense)>,
+) {
+    for attack in ev_attack.iter() {
+        let (mut health, defense) = query
+            .get_mut(attack.target)
+            .expect("The target of an attack should have Health and Defense");
+        health.value -= attack.attack.damage - defense.value;
+        // TODO handle death events now.
+    }
+}
+
+/// We could set up the engagement builder to tag gladiators as engaged with the Entity
+/// of their target. Then combat is done by looping through all gladiators that are engaged
+/// and emitting AttackEvents that contain the target entity. Call this gladiator_attacks().
+/// The timing of attacks can differ per gladiator here by having a Timer, similar to the
+/// animation timer
+/// A separate system here has an event reader that loops through all of the attack events,
+/// applying the damage to the health based on the defense. In this service, if the health
+/// is dropped below zero, we can emit a DeathEvent. The death event will send the level
+/// of the gladiator that died (used for rewarding experience) as well as the Entity who
+/// should recieve the experience. In order to have this data, the attacker Entity will
+/// need to be data contained in the AttackEvents. Death events will despawn the dead
+/// Gladiator and the Gladiator that receives the experience will despawn the Engagement
+/// on itself so that they become an eligible bachelor yet again.
+// fn gladiator_combat(
+//     engagement_query: Query<&Engagement>,
+//     mut gladiator_query: Query<(&mut Health, &mut Level, &Attack, &Defense), With<Gladiator>>,
+// ) {
+//     for engagement in &engagement_query {
+//         let (mut health_a, mut level_a, attack_a, defense_a) = gladiator_query
+//             .get_mut(engagement.gladiator_a)
+//             .expect("A gladiator in an engagement should exist in the ECS");
+//         let (mut health_b, mut level_b, attack_b, defense_b) = gladiator_query
+//             .get_mut(engagement.gladiator_b)
+//             .expect("A gladiator in an engagement should exist in the ECS");
+
+//         // TODO So I can't do both querys at the same time with mutable reference. I could just get the data, perform logic, returning the new data, then
+//         //  get mutable reference again to one at a time mutate, bounded by little mini scopes. hmmmm, don't love it.
+//         // do_combat(
+//         //     health_a,
+//         //     level_a,
+//         //     attack_a,
+//         //     defense_a,
+//         //     &mut *health_b,
+//         //     &mut *level_b,
+//         //     attack_b,
+//         //     defense_b,
+//         // );
+//     }
+// }
 
 // fn do_combat(
 //     &mut health_a: &mut Health,
@@ -113,6 +160,9 @@ fn spawn_one_gladiator(
 }
 
 /// Moves gladiators not controlled by the player
+/// TODO we can have a disjoint query here. One that is With<Engagement>
+/// and the other that is Without<Engagement> and handle the movement
+/// differently.
 fn gladiator_movement(
     mut query: Query<
         (&mut Transform, &Movement, &mut Animation),
@@ -169,17 +219,19 @@ pub struct Movement {
 pub struct Gladiator;
 
 #[derive(Component)]
-pub struct Health{
-    value: f32
+pub struct Health {
+    value: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct Attack {
     damage: f32,
 }
 
 #[derive(Component)]
-pub struct Defense(f32);
+pub struct Defense {
+    value: f32,
+}
 
 #[derive(Component)]
 pub struct Level {
@@ -193,8 +245,8 @@ pub enum GladiatorEngagementStatus {
 }
 
 #[derive(Component)]
-pub struct GladiatorEngagement{
-    pub status: GladiatorEngagementStatus
+pub struct GladiatorEngagement {
+    pub status: GladiatorEngagementStatus,
 }
 
 #[derive(Bundle)]
@@ -228,18 +280,13 @@ impl GladiatorBundle {
                 ANIMATION_STEP,
                 TimerMode::Repeating,
             )),
-            health: Health{ value: 10.0 },
-            level: Level {
-                level: 1,
-                xp: 0.,
-            },
-            attack: Attack{
-                damage: 1.0
-            },
-            defense: Defense(0.1),
+            health: Health { value: 10.0 },
+            level: Level { level: 1, xp: 0. },
+            attack: Attack { damage: 1.0 },
+            defense: Defense { value: 0.1 },
             engagement: GladiatorEngagement {
                 status: GladiatorEngagementStatus::Unengaged,
-            }
+            },
         }
     }
 }

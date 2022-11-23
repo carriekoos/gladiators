@@ -17,6 +17,7 @@ use game_lib::*;
 /// 8. Healing system
 /// 9. Items system
 /// 10. Start Game menu - Make easy to disable for development
+/// 11. Inspectable: https://rustrepo.com/repo/jakobhellermann-bevy-inspector-egui
 /// 11. Grid update event system
 ///   https://bevy-cheatbook.github.io/programming/events.html
 ///   Events seem like a many to many pub-sub system and the

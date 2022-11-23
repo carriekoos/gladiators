@@ -4,7 +4,6 @@ use bevy::{prelude::*, time::FixedTimestep};
 
 use crate::{animation::*, gladiator::*, *};
 
-// pub struct GridChangeEvent(pub Entity);
 #[derive(Debug)]
 pub struct GridChangeEvent {
     pub entity: Entity,

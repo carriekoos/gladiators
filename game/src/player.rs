@@ -150,6 +150,7 @@ fn player_movement(
     // emit event if entering a new grid location
     if current_grid_location != prev_grid_location {
         println!(
+            // can replace this with Inspector plugin
             "player at: x {} | y: {}",
             current_grid_location.x, current_grid_location.y
         );

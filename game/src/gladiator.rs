@@ -1,6 +1,13 @@
 use bevy::{prelude::*, time::FixedTimestep};
 
-use crate::{animation::*, engagements::*, helper_functions::*, player::*, *};
+use crate::{
+    animation::*,
+    engagements::*,
+    grid::{ArenaGrid, GridChangeEvent},
+    helper_functions::*,
+    player::*,
+    *,
+};
 
 pub struct GladiatorPlugin;
 
@@ -13,7 +20,8 @@ impl Plugin for GladiatorPlugin {
                     .with_system(gladiator_movement),
             )
             .add_system(gladiator_attacks)
-            .add_system(gladiator_receive_attack);
+            .add_system(gladiator_receive_attack)
+            .add_event::<AttackEvent>();
     }
 }
 
@@ -25,15 +33,19 @@ pub struct AttackEvent {
 }
 
 fn gladiator_attacks(
+    time: Res<Time>,
     mut ev_attack: EventWriter<AttackEvent>,
-    query: Query<(&Engagement, &Attack, Entity)>,
+    mut query: Query<(&Engagement, &Attack, &mut AttackTimer, Entity)>,
 ) {
-    for (engagement, attack, entity) in &query {
-        ev_attack.send(AttackEvent {
-            target: engagement.target,
-            attacker: entity,
-            attack: *attack,
-        });
+    for (engagement, attack, mut timer, entity) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            ev_attack.send(AttackEvent {
+                target: engagement.target,
+                attacker: entity,
+                attack: *attack,
+            });
+        }
     }
 }
 
@@ -46,6 +58,10 @@ fn gladiator_receive_attack(
             .get_mut(attack.target)
             .expect("The target of an attack should have Health and Defense.");
 
+        println!(
+            "{:?} attacking {:?} for {} damage!",
+            attack.attacker, attack.target, attack.attack.damage
+        );
         reduce_health_from_attack(&mut health.value, &defense.value, &attack.attack.damage);
     }
 }
@@ -163,13 +179,16 @@ fn spawn_one_gladiator(
 /// TODO we can have a disjoint query here. One that is With<Engagement>
 /// and the other that is Without<Engagement> and handle the movement
 /// differently.
+/// It would be helpful to break this out into two functions to do that.
+/// For now just going to filter query to remove engaged Gladiators
 fn gladiator_movement(
     mut query: Query<
-        (&mut Transform, &Movement, &mut Animation),
-        (With<Gladiator>, Without<Player>),
+        (&mut Transform, &Movement, &mut Animation, Entity),
+        (With<Gladiator>, Without<Player>, Without<Engagement>),
     >,
+    mut ev_grid_change: EventWriter<GridChangeEvent>,
 ) {
-    for (mut transform, movement, mut animation) in &mut query {
+    for (mut transform, movement, mut animation, entity) in &mut query {
         animation.animation_type = AnimationType::Walk;
 
         // maintain either left or right, otherwise default to left
@@ -198,17 +217,36 @@ fn gladiator_movement(
             x_movement = -1;
         }
 
+        // determine previous grid location
+        let prev_grid_location =
+            ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
+
         // apply the movement
         let y_movement: i16 = 0;
         let translation_delta =
             Vec3::new(x_movement.into(), y_movement.into(), 0.0) * movement.speed;
         transform.translation += translation_delta;
+
+        // determine current grid location
+        let current_grid_location =
+            ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
+
+        // emit event if entering a new grid location
+        if current_grid_location != prev_grid_location {
+            ev_grid_change.send(GridChangeEvent {
+                entity,
+                prev_loc: prev_grid_location,
+                curr_loc: current_grid_location,
+            });
+        }
     }
 }
 
-// for some reason I couldn't import this guy.
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(Timer);
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AttackTimer(Timer);
 
 #[derive(Component)]
 pub struct Movement {
@@ -220,7 +258,7 @@ pub struct Gladiator;
 
 #[derive(Component)]
 pub struct Health {
-    value: f32,
+    pub value: f32,
 }
 
 #[derive(Component, Debug, Clone, Copy)]
@@ -256,6 +294,7 @@ pub struct GladiatorBundle {
     movement: Movement,
     animation: Animation,
     animation_timer: AnimationTimer,
+    attack_timer: AttackTimer,
     health: Health,
     level: Level,
     attack: Attack,
@@ -280,6 +319,7 @@ impl GladiatorBundle {
                 ANIMATION_STEP,
                 TimerMode::Repeating,
             )),
+            attack_timer: AttackTimer(Timer::from_seconds(ATTACK_STEP, TimerMode::Repeating)),
             health: Health { value: 10.0 },
             level: Level { level: 1, xp: 0. },
             attack: Attack { damage: 1.0 },

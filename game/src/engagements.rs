@@ -41,7 +41,7 @@ fn engagement_builder(
         let mut colocated_and_unengaged = Vec::new();
         for entity in group {
             match gladiator_query.get(*entity) {
-                Ok(engagement) => {} // already engaged, not going to engage additionally
+                Ok(_engagement) => {} // already engaged, not going to engage additionally
                 Err(_) => colocated_and_unengaged.push(entity), // this gladiator is not engaged, so they are eligible
             }
         }
@@ -54,7 +54,11 @@ fn engagement_builder(
             let &gladiator_b = colocated_and_unengaged
                 .get(2 * idx + 1)
                 .expect("Already checked that this index should exist.");
-            // spawn the par of Engagement(Targets) on the relevant entities
+            println!(
+                "New engagement between {:?} and {:?}!",
+                gladiator_a, gladiator_b
+            );
+            // spawn the pair of Engagement(Targets) on the relevant entities
             // this time not with commands.spawn but instead entity.insert()
             commands.entity(*gladiator_a).insert(Engagement {
                 target: *gladiator_b,

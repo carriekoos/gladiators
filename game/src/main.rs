@@ -1,4 +1,5 @@
 use bevy::{prelude::*, window::PresentMode};
+use game_lib::engagements::EngagementManagerPlugin;
 use game_lib::grid::GridPlugin;
 
 use crate::animation::*;
@@ -42,6 +43,7 @@ fn main() {
                     ..default()
                 }),
         )
+        .add_plugin(EngagementManagerPlugin)
         .add_plugin(GridPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(GladiatorPlugin)
@@ -51,7 +53,10 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // spawn camera
     commands.spawn(Camera2dBundle::default());
+
+    // spawn background
     commands.spawn(SpriteBundle {
         texture: asset_server.load("arena.png"),
         transform: Transform::from_scale(

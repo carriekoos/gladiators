@@ -11,14 +11,13 @@ pub fn animate_sprite(
     mut query: Query<
         (
             // give me all the entities
-            &mut AnimationTimer,     // with an AnimationTimer,
-            &mut TextureAtlasSprite, // a TextureAtlasSprite,
+            &mut AnimationTimer,
+            &mut TextureAtlasSprite,
             &mut Animation,
         ),
         With<Gladiator>,
     >,
 ) {
-    // single_mut() works right now because we only have one Player entity
     for (mut timer, mut sprite, mut animation) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {

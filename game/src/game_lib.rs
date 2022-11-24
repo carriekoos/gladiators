@@ -31,6 +31,7 @@ pub const PLAYER_START_X: f32 = -300.0;
 pub const PLAYER_START_Y: f32 = -200.0;
 
 /// Gladiator constants
+pub const ATTACK_STEP: f32 = 0.3; // how fast do gladiators attack (in seconds)
 pub const MOVEMENT_STEP: f32 = 1.0 / 60.0; // warning, this is related to GLADIATOR_SPEED
 pub const N_GLADIATORS: i32 = 5; // for now this can't be larger than the length of GLADIATOR_SPRITES
 pub const GLADIATOR_SPEED: f32 = 2.; // warning, this is related to MOVEMENT_STEP and GLADIATOR_SIZE

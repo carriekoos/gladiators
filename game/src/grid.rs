@@ -15,8 +15,7 @@ pub struct GridPlugin;
 
 impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_grid)
-            .add_event::<GridChangeEvent>()
+        app.add_event::<GridChangeEvent>()
             .add_system(evaluate_grid)
             .init_resource::<ArenaGrid>();
     }
@@ -28,7 +27,6 @@ fn spawn_grid() {}
 fn evaluate_grid(mut ev_grid_change: EventReader<GridChangeEvent>, mut griddy: ResMut<ArenaGrid>) {
     for read in ev_grid_change.iter() {
         griddy.update_entity_location(read.entity, &read.prev_loc, &read.curr_loc);
-        println!("Grid got grid change event from {:?}", read);
     }
 }
 

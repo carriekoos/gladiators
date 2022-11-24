@@ -1,6 +1,6 @@
 use bevy::{prelude::*, time::FixedTimestep};
 
-use crate::{animation::*, engagements::*, player::*, *};
+use crate::{animation::*, engagements::*, helper_functions::*, player::*, *};
 
 pub struct GladiatorPlugin;
 
@@ -44,9 +44,9 @@ fn gladiator_receive_attack(
     for attack in ev_attack.iter() {
         let (mut health, defense) = query
             .get_mut(attack.target)
-            .expect("The target of an attack should have Health and Defense");
-        health.value -= attack.attack.damage - defense.value;
-        // TODO handle death events now.
+            .expect("The target of an attack should have Health and Defense.");
+
+        reduce_health_from_attack(&mut health.value, &defense.value, &attack.attack.damage);
     }
 }
 

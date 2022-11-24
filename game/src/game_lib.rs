@@ -4,6 +4,7 @@ pub mod animation;
 pub mod engagements;
 pub mod gladiator;
 pub mod grid;
+pub mod helper_functions;
 pub mod player;
 
 // TODO several of these constsants could be pushed into a lazy static to deal with their coupling.

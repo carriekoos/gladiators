@@ -21,7 +21,9 @@ impl Plugin for GladiatorPlugin {
             )
             .add_system(gladiator_attacks)
             .add_system(gladiator_receive_attack)
-            .add_event::<AttackEvent>();
+            .add_system(gladiator_death_handler)
+            .add_event::<AttackEvent>()
+            .add_event::<DeathEvent>();
     }
 }
 
@@ -30,6 +32,13 @@ pub struct AttackEvent {
     pub target: Entity,
     pub attacker: Entity,
     pub attack: Attack,
+}
+
+#[derive(Debug)]
+pub struct DeathEvent {
+    pub victor: Entity,
+    pub xp_earned: f32,
+    pub slain: Entity,
 }
 
 fn gladiator_attacks(
@@ -51,10 +60,11 @@ fn gladiator_attacks(
 
 fn gladiator_receive_attack(
     mut ev_attack: EventReader<AttackEvent>,
-    mut query: Query<(&mut Health, &Defense)>,
+    mut ev_death: EventWriter<DeathEvent>,
+    mut query: Query<(&mut Health, &Defense, &Level)>,
 ) {
     for attack in ev_attack.iter() {
-        let (mut health, defense) = query
+        let (mut health, defense, level) = query
             .get_mut(attack.target)
             .expect("The target of an attack should have Health and Defense.");
 
@@ -63,6 +73,32 @@ fn gladiator_receive_attack(
             attack.attacker, attack.target, attack.attack.damage
         );
         reduce_health_from_attack(&mut health.value, &defense.value, &attack.attack.damage);
+
+        // The reader for DeathEvents will despawn the gladiator that died and award XP to the
+        // gladiator that made the kill.
+        if health.value < 0.0 {
+            ev_death.send(DeathEvent {
+                victor: attack.attacker,
+                xp_earned: level.convert_to_xp(),
+                slain: attack.target,
+            })
+        }
+    }
+}
+
+fn gladiator_death_handler(
+    mut commands: Commands,
+    mut ev_death: EventReader<DeathEvent>,
+    mut query: Query<&mut Level, With<Gladiator>>,
+) {
+    for event in ev_death.iter() {
+        let mut victor_level = query
+            .get_mut(event.victor)
+            .expect("Victor of engagement should exist in ECS.");
+        victor_level.gain_xp(event.xp_earned);
+        commands.entity(event.victor).remove::<Engagement>();
+        println!("{:?} is dead!", event.slain);
+        commands.entity(event.slain).despawn();
     }
 }
 
@@ -275,6 +311,26 @@ pub struct Defense {
 pub struct Level {
     level: usize,
     xp: f32,
+}
+
+impl Level {
+    pub fn convert_to_xp(&self) -> f32 {
+        // TODO placeholder math
+        let level_xp_base: f32 = 2.;
+        self.xp + level_xp_base.powf(self.level as f32)
+    }
+
+    pub fn gain_xp(&mut self, xp_earned: f32) {
+        // TODO placeholder math
+        let level_base: f32 = 3.;
+        let next_level_xp = level_base.powf(self.level as f32);
+        if self.xp + xp_earned >= next_level_xp {
+            self.xp += xp_earned - next_level_xp;
+            self.level += 1;
+        } else {
+            self.xp += xp_earned;
+        }
+    }
 }
 
 pub enum GladiatorEngagementStatus {

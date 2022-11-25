@@ -21,12 +21,9 @@ impl Plugin for GridPlugin {
     }
 }
 
-/// Spawns the grid
-fn spawn_grid() {}
-
 fn evaluate_grid(mut ev_grid_change: EventReader<GridChangeEvent>, mut griddy: ResMut<ArenaGrid>) {
-    for read in ev_grid_change.iter() {
-        griddy.update_entity_location(read.entity, &read.prev_loc, &read.curr_loc);
+    for event in ev_grid_change.iter() {
+        griddy.update_entity_location(event.entity, &event.prev_loc, &event.curr_loc);
     }
 }
 

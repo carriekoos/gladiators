@@ -17,13 +17,37 @@ impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<GridChangeEvent>()
             .add_system(evaluate_grid)
+            .add_system(prune_grid)
             .init_resource::<ArenaGrid>();
     }
 }
 
-fn evaluate_grid(mut ev_grid_change: EventReader<GridChangeEvent>, mut griddy: ResMut<ArenaGrid>) {
+fn evaluate_grid(
+    mut ev_grid_change: EventReader<GridChangeEvent>,
+    mut arena_grid: ResMut<ArenaGrid>,
+) {
     for event in ev_grid_change.iter() {
-        griddy.update_entity_location(event.entity, &event.prev_loc, &event.curr_loc);
+        arena_grid.update_entity_location(event.entity, &event.prev_loc, &event.curr_loc);
+    }
+}
+
+/// Listens to DeathEvents and removes the gladiator that died from the arena grid.
+fn prune_grid(
+    mut arena_grid: ResMut<ArenaGrid>,
+    mut ev_death: EventReader<DeathEvent>,
+    query: Query<&Transform>,
+) {
+    for event in ev_death.iter() {
+        let transform = query
+            .get(event.slain)
+            .expect("Slain gladiator should exist in ECS."); // this may be race condition with despawn? could handle by having grid go first or last always?
+        let grid_location =
+            ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
+        let mut gladiators = arena_grid
+            .grid_map
+            .get_mut(&grid_location)
+            .expect("Grid location of entity being removed should be present in grid_map.");
+        gladiators.retain(|x| x != &event.slain);
     }
 }
 
@@ -175,21 +199,4 @@ impl ArenaGrid {
             }
         }
     }
-
-    // // I don't think this is helpful because we need pairs of unengaged, not pairs of colocated gladiators.
-    // fn get_colocated_gladiators(&self) -> Vec<(Entity, Entity)> {
-    //     let mut pairs = Vec::new();
-
-    //     for group in self.grid_map.values() {
-    //         let n_colocated = group.len();
-    //         let n_pairs = n_colocated / 2;
-    //         for i in 0..n_pairs {
-    //             let gladiator_a = group.get(2 * i).expect("Already checked that this index should exist.");
-    //             let gladiator_b = group.get(2 * i + 1).expect("Already checked that this index should exist.");
-    //             pairs.push((gladiator_a, gladiator_b))
-    //         }
-    //     }
-
-    //     pairs
-    // }
 }

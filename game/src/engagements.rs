@@ -32,12 +32,10 @@ impl Plugin for EngagementManagerPlugin {
 // TODO: Good docstrings on how/why this is used in this way.
 fn engagement_builder(
     mut commands: Commands,
-    griddy: Res<ArenaGrid>,
-    // mut engagements_query: Query<&Engagement>, // why do I need this?
-    // mut gladiator_query: Query<&GladiatorEngagement, With<Gladiator>>,
+    arena_grid: Res<ArenaGrid>,
     gladiator_query: Query<&Engagement>,
 ) {
-    for group in griddy.grid_map.values() {
+    for group in arena_grid.grid_map.values() {
         let mut colocated_and_unengaged = Vec::new();
         for entity in group {
             match gladiator_query.get(*entity) {

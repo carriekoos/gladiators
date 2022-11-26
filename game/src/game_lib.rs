@@ -27,8 +27,8 @@ pub const ANIMATION_STEP: f32 = 0.15;
 
 /// Player constants
 // starting coordinates of player
-pub const PLAYER_START_X: f32 = -300.0;
-pub const PLAYER_START_Y: f32 = -200.0;
+pub const PLAYER_START_X: f32 = -200.0;
+pub const PLAYER_START_Y: f32 = -100.0;
 
 /// Gladiator constants
 pub const ATTACK_STEP: f32 = 0.3; // how fast do gladiators attack (in seconds)

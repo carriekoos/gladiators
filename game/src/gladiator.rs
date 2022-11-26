@@ -88,6 +88,7 @@ fn gladiator_receive_attack(
 
 fn gladiator_death_handler(
     mut commands: Commands,
+    mut arena_grid: ResMut<ArenaGrid>,
     mut ev_death: EventReader<DeathEvent>,
     mut query: Query<&mut Level, With<Gladiator>>,
 ) {
@@ -98,6 +99,8 @@ fn gladiator_death_handler(
         victor_level.gain_xp(event.xp_earned);
         commands.entity(event.victor).remove::<Engagement>();
         println!("{:?} is dead!", event.slain);
+
+        // remove from arena grid and despawn
         commands.entity(event.slain).despawn();
     }
 }

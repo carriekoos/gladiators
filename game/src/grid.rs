@@ -43,7 +43,7 @@ fn prune_grid(
             .expect("Slain gladiator should exist in ECS."); // this may be race condition with despawn? could handle by having grid go first or last always?
         let grid_location =
             ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
-        let mut gladiators = arena_grid
+        let gladiators = arena_grid
             .grid_map
             .get_mut(&grid_location)
             .expect("Grid location of entity being removed should be present in grid_map.");

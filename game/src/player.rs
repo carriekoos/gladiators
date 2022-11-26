@@ -128,14 +128,14 @@ fn player_movement(
 
         // adjust direction
         animation.animation_direction =
-            match AnimationDirection::from_movement(x_movement.into(), y_movement.into()) {
+            match GladiatorDirection::from_movement(x_movement.into(), y_movement.into()) {
                 Ok(direction) => direction,
                 Err(err) => {
                     println!(
                         "Unable to set animation direction. {} Setting to DOWN.",
                         err
                     );
-                    AnimationDirection::Down
+                    GladiatorDirection::Down
                 }
             };
 

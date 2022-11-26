@@ -37,7 +37,7 @@ pub struct Animation {
     /// Describes which animation is happening
     pub animation_type: AnimationType,
     /// Describes the direction that the sprite is facing
-    pub animation_direction: AnimationDirection,
+    pub animation_direction: GladiatorDirection,
     /// Describes which frame of the series of images comprising an animation
     pub frame_index: usize,
 }
@@ -86,7 +86,7 @@ impl AnimationType {
 }
 
 #[derive(Clone, Copy)]
-pub enum AnimationDirection {
+pub enum GladiatorDirection {
     Down = 0,
     DownRight = 1,
     Right = 2,
@@ -97,21 +97,34 @@ pub enum AnimationDirection {
     DownLeft = 7,
 }
 
-impl AnimationDirection {
+impl GladiatorDirection {
     pub fn from_movement(x_movement: i32, y_movement: i32) -> Result<Self, String> {
         match (x_movement, y_movement) {
-            (1, 1) => Ok(AnimationDirection::UpRight),
-            (1, 0) => Ok(AnimationDirection::Right),
-            (1, -1) => Ok(AnimationDirection::DownRight),
-            (0, 1) => Ok(AnimationDirection::Up),
-            (0, 0) => Ok(AnimationDirection::Down),
-            (0, -1) => Ok(AnimationDirection::Down),
-            (-1, 1) => Ok(AnimationDirection::UpLeft),
-            (-1, 0) => Ok(AnimationDirection::Left),
-            (-1, -1) => Ok(AnimationDirection::DownLeft),
+            (1, 1) => Ok(GladiatorDirection::UpRight),
+            (1, 0) => Ok(GladiatorDirection::Right),
+            (1, -1) => Ok(GladiatorDirection::DownRight),
+            (0, 1) => Ok(GladiatorDirection::Up),
+            (0, 0) => Ok(GladiatorDirection::Down),
+            (0, -1) => Ok(GladiatorDirection::Down),
+            (-1, 1) => Ok(GladiatorDirection::UpLeft),
+            (-1, 0) => Ok(GladiatorDirection::Left),
+            (-1, -1) => Ok(GladiatorDirection::DownLeft),
             _ => Err(
                 "Movement was not a unit vector and could not generate animation direction.".into(),
             ),
+        }
+    }
+
+    pub fn to_movement(&self) -> (f32, f32) {
+        match self {
+            GladiatorDirection::Down => (0., -1.),
+            GladiatorDirection::DownRight => (1., -1.),
+            GladiatorDirection::Right => (1., 0.),
+            GladiatorDirection::UpRight => (1., 1.),
+            GladiatorDirection::Up => (0., 1.),
+            GladiatorDirection::UpLeft => (-1., 1.),
+            GladiatorDirection::Left => (-1., 0.),
+            GladiatorDirection::DownLeft => (-1., -1.),
         }
     }
 }

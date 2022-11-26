@@ -1,4 +1,5 @@
 use bevy::{prelude::*, time::FixedTimestep};
+use rand::{self, distributions::WeightedIndex, prelude::*, rngs::ThreadRng, Rng};
 
 use crate::{
     animation::*,
@@ -88,7 +89,6 @@ fn gladiator_receive_attack(
 
 fn gladiator_death_handler(
     mut commands: Commands,
-    mut arena_grid: ResMut<ArenaGrid>,
     mut ev_death: EventReader<DeathEvent>,
     mut query: Query<&mut Level, With<Gladiator>>,
 ) {
@@ -100,7 +100,6 @@ fn gladiator_death_handler(
         commands.entity(event.victor).remove::<Engagement>();
         println!("{:?} is dead!", event.slain);
 
-        // remove from arena grid and despawn
         commands.entity(event.slain).despawn();
     }
 }
@@ -164,10 +163,12 @@ fn spawn_gladiators(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     for i in 0..N_GLADIATORS {
-        let coordinate = (50 * i) as f32;
+        let mut rng = rand::thread_rng();
+        let x = rng.gen_range(-WINDOW_WIDTH..WINDOW_WIDTH);
+        let y = rng.gen_range(-WINDOW_HEIGHT..WINDOW_HEIGHT);
         spawn_one_gladiator(
-            Vec2::splat(coordinate),
-            i,
+            Vec2::new(x, y),
+            i as usize,
             &mut commands,
             &asset_server,
             &mut texture_atlases,
@@ -178,7 +179,7 @@ fn spawn_gladiators(
 /// Spawns a gladiator not controlled by the player
 fn spawn_one_gladiator(
     location: Vec2,
-    gladiator_idx: i32,
+    gladiator_idx: usize,
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
@@ -186,11 +187,13 @@ fn spawn_one_gladiator(
     // grab a different spritesheet based on gladiator_idx
     let path = format!(
         "{}{}",
-        GLADIATOR_SPRITES_PATH, GLADIATOR_SPRITES[gladiator_idx as usize]
+        GLADIATOR_SPRITES_PATH,
+        GLADIATOR_SPRITES[(gladiator_idx % GLADIATOR_SPRITES.len()) as usize]
     );
 
     let texture_handle = asset_server.load(&path);
     // The values used in the next function are specific to the Puny Characters sprite sheets
+    // TODO lazy static this?
     let texture_atlas = TextureAtlas::from_grid(
         texture_handle,
         Vec2::new(24.0, 24.0),
@@ -230,30 +233,63 @@ fn gladiator_movement(
     for (mut transform, movement, mut animation, entity) in &mut query {
         animation.animation_type = AnimationType::Walk;
 
+        let mut direction_probability = GladiatorDirectionProbability::new();
+
+        // determine previous direction to weight the probability.
+        let prev_direction_weight = 100;
+        match animation.animation_direction {
+            GladiatorDirection::Down => direction_probability.down = prev_direction_weight,
+            GladiatorDirection::DownRight => {
+                direction_probability.down_right = prev_direction_weight
+            }
+            GladiatorDirection::Right => direction_probability.right = prev_direction_weight,
+            GladiatorDirection::UpRight => direction_probability.up_right = prev_direction_weight,
+            GladiatorDirection::Up => direction_probability.up = prev_direction_weight,
+            GladiatorDirection::UpLeft => direction_probability.up_left = prev_direction_weight,
+            GladiatorDirection::Left => direction_probability.left = prev_direction_weight,
+            GladiatorDirection::DownLeft => direction_probability.down_left = prev_direction_weight,
+        }
+
+        let new_direction = direction_probability.get_direction();
+        let (mut x_movement, mut y_movement) = new_direction.to_movement();
+        animation.animation_direction = new_direction;
+
         // maintain either left or right, otherwise default to left
         // This movement is just a placeholder until they get path planning.
-        let mut x_movement: i16 = -1;
-        (animation.animation_direction, x_movement) = match animation.animation_direction {
-            AnimationDirection::Down => (AnimationDirection::Left, -1),
-            AnimationDirection::DownRight => (AnimationDirection::Left, -1),
-            AnimationDirection::Right => (AnimationDirection::Right, 1),
-            AnimationDirection::UpRight => (AnimationDirection::Left, -1),
-            AnimationDirection::Up => (AnimationDirection::Left, -1),
-            AnimationDirection::UpLeft => (AnimationDirection::Left, -1),
-            AnimationDirection::Left => (AnimationDirection::Left, -1),
-            AnimationDirection::DownLeft => (AnimationDirection::Left, -1),
-        };
+        // let mut x_movement: i16 = -1;
+        // (animation.animation_direction, x_movement) = match animation.animation_direction {
+        //     GladiatorDirection::Down => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::DownRight => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::Right => (GladiatorDirection::Right, 1),
+        //     GladiatorDirection::UpRight => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::Up => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::UpLeft => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::Left => (GladiatorDirection::Left, -1),
+        //     GladiatorDirection::DownLeft => (GladiatorDirection::Left, -1),
+        // };
 
         // if too far left, go right
-        if transform.translation[0] < -WINDOW_WIDTH / 2. {
-            animation.animation_direction = AnimationDirection::Right;
-            x_movement = 1;
+        if (transform.translation[0] + x_movement) < (-WINDOW_WIDTH / 2.) {
+            animation.animation_direction = GladiatorDirection::Right;
+            x_movement = 1.0;
         }
 
         // if too far right, go left
-        if transform.translation[0] > WINDOW_WIDTH / 2. {
-            animation.animation_direction = AnimationDirection::Left;
-            x_movement = -1;
+        if (transform.translation[0] + x_movement) > (WINDOW_WIDTH / 2.) {
+            animation.animation_direction = GladiatorDirection::Left;
+            x_movement = -1.0;
+        }
+
+        // if too far down, go up
+        if (transform.translation[1] + y_movement) < (-WINDOW_HEIGHT / 2.) {
+            animation.animation_direction = GladiatorDirection::Up;
+            y_movement = 1.0;
+        }
+
+        // if too far up, go down
+        if (transform.translation[1] + y_movement) > (WINDOW_HEIGHT / 2.) {
+            animation.animation_direction = GladiatorDirection::Left;
+            y_movement = -1.0;
         }
 
         // determine previous grid location
@@ -261,7 +297,6 @@ fn gladiator_movement(
             ArenaGrid::get_grid_location(transform.translation[0], transform.translation[1]);
 
         // apply the movement
-        let y_movement: i16 = 0;
         let translation_delta =
             Vec3::new(x_movement.into(), y_movement.into(), 0.0) * movement.speed;
         transform.translation += translation_delta;
@@ -371,7 +406,7 @@ impl GladiatorBundle {
             },
             animation: Animation {
                 animation_type: AnimationType::Idle,
-                animation_direction: AnimationDirection::Down,
+                animation_direction: GladiatorDirection::Down,
                 frame_index: 0,
             },
             animation_timer: AnimationTimer(Timer::from_seconds(
@@ -387,5 +422,70 @@ impl GladiatorBundle {
                 status: GladiatorEngagementStatus::Unengaged,
             },
         }
+    }
+}
+
+struct GladiatorDirectionProbability {
+    pub down: u32,
+    pub down_right: u32,
+    pub right: u32,
+    pub up_right: u32,
+    pub up: u32,
+    pub up_left: u32,
+    pub left: u32,
+    pub down_left: u32,
+    categorical_distribution: WeightedIndex<u32>,
+    directions: Vec<GladiatorDirection>,
+    rng: ThreadRng,
+}
+
+impl GladiatorDirectionProbability {
+    pub fn new() -> Self {
+        let directions = vec![
+            GladiatorDirection::Down,
+            GladiatorDirection::DownRight,
+            GladiatorDirection::Right,
+            GladiatorDirection::UpRight,
+            GladiatorDirection::Up,
+            GladiatorDirection::UpLeft,
+            GladiatorDirection::Left,
+            GladiatorDirection::DownLeft,
+        ];
+
+        // bad default
+        let categorical_distribution = WeightedIndex::new(&[1, 1, 1, 1, 1, 1, 1, 1]).unwrap();
+        Self {
+            down: 1,
+            down_right: 1,
+            right: 1,
+            up_right: 1,
+            up: 1,
+            up_left: 1,
+            left: 1,
+            down_left: 1,
+            categorical_distribution,
+            directions,
+            rng: rand::thread_rng(),
+        }
+    }
+
+    pub fn update_categorical_distribution(&mut self) {
+        self.categorical_distribution = WeightedIndex::new(&[
+            self.down,
+            self.down_right,
+            self.right,
+            self.up_right,
+            self.up,
+            self.up_left,
+            self.left,
+            self.down_left,
+        ])
+        .unwrap();
+    }
+
+    pub fn get_direction(&mut self) -> GladiatorDirection {
+        self.update_categorical_distribution();
+        // let mut rng = rand::thread_rng();
+        self.directions[self.categorical_distribution.sample(&mut self.rng)]
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    gladiator::gladiator_events::DeathEvent,
+    gladiator::{gladiator_combat::*, gladiator_events::DeathEvent},
     *, // game_lib
 };
 
@@ -20,7 +20,11 @@ impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<GridChangeEvent>()
             .add_system(evaluate_grid)
-            .add_system(prune_grid)
+            .add_system(
+                prune_grid
+                    .after(gladiator_receive_attack)
+                    .before(gladiator_death_handler),
+            )
             .init_resource::<ArenaGrid>();
     }
 }

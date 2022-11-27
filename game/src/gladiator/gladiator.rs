@@ -11,12 +11,12 @@ use crate::{
 ///////////////////////////////////////////////////////
 /// Bugs
 ///////////////////////////////////////////////////////
-/// thread 'main' panicked at 'Victor of engagement should exist in ECS.: NoSuchEntity(276v0)', game\src\gladiator\gladiator_combat.rs:83:14
 /// 276v0 is dead!
 /// 301v0 is dead!
 /// 184v0 attacking 8v0 for 1 damage!
 /// 8v0 attacking 184v0 for 1 damage!
 /// 276v0 attacking 52v0 for 3 damage!
+/// thread 'main' panicked at 'Victor of engagement should exist in ECS.: NoSuchEntity(276v0)', game\src\gladiator\gladiator_combat.rs:83:14
 
 ///////////////////////////////////////////////////////
 /// Plugin
@@ -34,7 +34,7 @@ impl Plugin for GladiatorPlugin {
             )
             .add_system(gladiator_attacks)
             .add_system(gladiator_receive_attack)
-            .add_system(gladiator_death_handler)
+            .add_system(gladiator_death_handler) // how does this guy go last?
             .add_event::<AttackEvent>()
             .add_event::<DeathEvent>();
     }

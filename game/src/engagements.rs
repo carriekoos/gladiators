@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{gladiator::*, grid::ArenaGrid};
+use crate::grid::*;
 
 /// Plan for this design.
 /// We are going to run movement systems first.

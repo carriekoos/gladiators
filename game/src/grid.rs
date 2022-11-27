@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use bevy::{prelude::*, time::FixedTimestep};
+use bevy::prelude::*;
 
-use crate::{animation::*, gladiator::*, *};
+use crate::{
+    gladiator::gladiator_events::DeathEvent,
+    *, // game_lib
+};
 
 #[derive(Debug)]
 pub struct GridChangeEvent {

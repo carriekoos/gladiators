@@ -36,8 +36,10 @@ pub fn heal_from_item(health: &mut f32, healing_item_type: HealingItem) {
 /// Determines attack damage
 /// What things affect attack damage?
 pub fn determine_attack_damage() -> f32 {
-    todo!()
+    todo!();
 }
 
 /// Adjust Level/XP
-pub fn gain_experience(level: &mut usize, xp: &mut f32) {}
+pub fn gain_experience(level: &mut usize, xp: &mut f32) {
+    todo!();
+}

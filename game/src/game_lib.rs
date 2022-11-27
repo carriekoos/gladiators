@@ -45,11 +45,3 @@ pub const GLADIATOR_SPRITES: [&str; 5] = [
     "Archer-Green.png",
     "Archer-Purple.png",
 ];
-
-#[derive(Component)]
-pub struct CombatStatus {
-    engaged: bool,
-}
-
-#[derive(Component)]
-pub struct Unengaged;

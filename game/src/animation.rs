@@ -1,12 +1,28 @@
 use bevy::prelude::*;
 
-use crate::gladiator::*;
+use crate::gladiator::{gladiator::*, gladiator_components::*};
+
+///////////////////////////////////////////////////////
+/// Plugin
+///////////////////////////////////////////////////////
+
+pub struct AnimationPlugin;
+
+impl Plugin for AnimationPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(animate_sprites);
+    }
+}
+
+///////////////////////////////////////////////////////
+/// Functions
+///////////////////////////////////////////////////////
 
 /// TODO we can have disjoint queries here for With/Without<Engagement>
 /// With<> is going to do attack animations that could look at other data
 /// such as EquippedWeapon or something. Without<> is going to perform
 /// the movement logic already present here.
-pub fn animate_sprite(
+pub fn animate_sprites(
     time: Res<Time>,
     mut query: Query<
         (
@@ -31,6 +47,10 @@ pub fn animate_sprite(
         }
     }
 }
+
+///////////////////////////////////////////////////////
+/// Structs and Enums
+///////////////////////////////////////////////////////
 
 #[derive(Component)]
 pub struct Animation {
@@ -81,50 +101,6 @@ impl AnimationType {
             Self::Throw => (15, 17),
             Self::Hurt => (18, 20),
             Self::Death => (21, 23),
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-pub enum GladiatorDirection {
-    Down = 0,
-    DownRight = 1,
-    Right = 2,
-    UpRight = 3,
-    Up = 4,
-    UpLeft = 5,
-    Left = 6,
-    DownLeft = 7,
-}
-
-impl GladiatorDirection {
-    pub fn from_movement(x_movement: i32, y_movement: i32) -> Result<Self, String> {
-        match (x_movement, y_movement) {
-            (1, 1) => Ok(GladiatorDirection::UpRight),
-            (1, 0) => Ok(GladiatorDirection::Right),
-            (1, -1) => Ok(GladiatorDirection::DownRight),
-            (0, 1) => Ok(GladiatorDirection::Up),
-            (0, 0) => Ok(GladiatorDirection::Down),
-            (0, -1) => Ok(GladiatorDirection::Down),
-            (-1, 1) => Ok(GladiatorDirection::UpLeft),
-            (-1, 0) => Ok(GladiatorDirection::Left),
-            (-1, -1) => Ok(GladiatorDirection::DownLeft),
-            _ => Err(
-                "Movement was not a unit vector and could not generate animation direction.".into(),
-            ),
-        }
-    }
-
-    pub fn to_movement(&self) -> (f32, f32) {
-        match self {
-            GladiatorDirection::Down => (0., -1.),
-            GladiatorDirection::DownRight => (1., -1.),
-            GladiatorDirection::Right => (1., 0.),
-            GladiatorDirection::UpRight => (1., 1.),
-            GladiatorDirection::Up => (0., 1.),
-            GladiatorDirection::UpLeft => (-1., 1.),
-            GladiatorDirection::Left => (-1., 0.),
-            GladiatorDirection::DownLeft => (-1., -1.),
         }
     }
 }

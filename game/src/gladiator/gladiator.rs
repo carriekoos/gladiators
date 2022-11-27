@@ -4,11 +4,16 @@ use rand::{self, distributions::WeightedIndex, prelude::*, rngs::ThreadRng, Rng}
 use crate::{
     animation::*,
     engagements::*,
+    gladiator::{gladiator_bundles::*, gladiator_components::*, gladiator_events::*},
     grid::{ArenaGrid, GridChangeEvent},
     helper_functions::*,
-    player::*,
-    *,
+    player::player_components::*,
+    *, // game_lib
 };
+
+///////////////////////////////////////////////////////
+/// Plugin
+///////////////////////////////////////////////////////
 
 pub struct GladiatorPlugin;
 
@@ -28,19 +33,9 @@ impl Plugin for GladiatorPlugin {
     }
 }
 
-#[derive(Debug)]
-pub struct AttackEvent {
-    pub target: Entity,
-    pub attacker: Entity,
-    pub attack: Attack,
-}
-
-#[derive(Debug)]
-pub struct DeathEvent {
-    pub victor: Entity,
-    pub xp_earned: f32,
-    pub slain: Entity,
-}
+///////////////////////////////////////////////////////
+/// Functions
+///////////////////////////////////////////////////////
 
 fn gladiator_attacks(
     time: Res<Time>,
@@ -316,111 +311,50 @@ fn gladiator_movement(
     }
 }
 
-#[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
+///////////////////////////////////////////////////////
+/// Structs and Enums
+///////////////////////////////////////////////////////
 
-#[derive(Component, Deref, DerefMut)]
-pub struct AttackTimer(Timer);
-
-#[derive(Component)]
-pub struct Movement {
-    pub speed: f32,
+#[derive(Clone, Copy)]
+pub enum GladiatorDirection {
+    Down = 0,
+    DownRight = 1,
+    Right = 2,
+    UpRight = 3,
+    Up = 4,
+    UpLeft = 5,
+    Left = 6,
+    DownLeft = 7,
 }
 
-#[derive(Component)]
-pub struct Gladiator;
-
-#[derive(Component)]
-pub struct Health {
-    pub value: f32,
-}
-
-#[derive(Component, Debug, Clone, Copy)]
-pub struct Attack {
-    damage: f32,
-}
-
-#[derive(Component)]
-pub struct Defense {
-    value: f32,
-}
-
-#[derive(Component)]
-pub struct Level {
-    level: usize,
-    xp: f32,
-}
-
-impl Level {
-    pub fn convert_to_xp(&self) -> f32 {
-        // TODO placeholder math
-        let level_xp_base: f32 = 2.;
-        self.xp + level_xp_base.powf(self.level as f32)
-    }
-
-    pub fn gain_xp(&mut self, xp_earned: f32) {
-        // TODO placeholder math
-        let level_base: f32 = 3.;
-        let next_level_xp = level_base.powf(self.level as f32);
-        if self.xp + xp_earned >= next_level_xp {
-            self.xp += xp_earned - next_level_xp;
-            self.level += 1;
-        } else {
-            self.xp += xp_earned;
+impl GladiatorDirection {
+    pub fn from_movement(x_movement: i32, y_movement: i32) -> Result<Self, String> {
+        match (x_movement, y_movement) {
+            (1, 1) => Ok(GladiatorDirection::UpRight),
+            (1, 0) => Ok(GladiatorDirection::Right),
+            (1, -1) => Ok(GladiatorDirection::DownRight),
+            (0, 1) => Ok(GladiatorDirection::Up),
+            (0, 0) => Ok(GladiatorDirection::Down),
+            (0, -1) => Ok(GladiatorDirection::Down),
+            (-1, 1) => Ok(GladiatorDirection::UpLeft),
+            (-1, 0) => Ok(GladiatorDirection::Left),
+            (-1, -1) => Ok(GladiatorDirection::DownLeft),
+            _ => Err(
+                "Movement was not a unit vector and could not generate animation direction.".into(),
+            ),
         }
     }
-}
 
-pub enum GladiatorEngagementStatus {
-    Engaged,
-    Unengaged,
-}
-
-#[derive(Component)]
-pub struct GladiatorEngagement {
-    pub status: GladiatorEngagementStatus,
-}
-
-#[derive(Bundle)]
-pub struct GladiatorBundle {
-    // needs Health, Level, Attack, and Defense
-    gladiator: Gladiator,
-    movement: Movement,
-    animation: Animation,
-    animation_timer: AnimationTimer,
-    attack_timer: AttackTimer,
-    health: Health,
-    level: Level,
-    attack: Attack,
-    defense: Defense,
-    engagement: GladiatorEngagement,
-}
-
-impl GladiatorBundle {
-    pub fn new() -> Self {
-        // the default values of the animation will quickly get overwritten
-        Self {
-            gladiator: Gladiator,
-            movement: Movement {
-                speed: GLADIATOR_SPEED,
-            },
-            animation: Animation {
-                animation_type: AnimationType::Idle,
-                animation_direction: GladiatorDirection::Down,
-                frame_index: 0,
-            },
-            animation_timer: AnimationTimer(Timer::from_seconds(
-                ANIMATION_STEP,
-                TimerMode::Repeating,
-            )),
-            attack_timer: AttackTimer(Timer::from_seconds(ATTACK_STEP, TimerMode::Repeating)),
-            health: Health { value: 10.0 },
-            level: Level { level: 1, xp: 0. },
-            attack: Attack { damage: 1.0 },
-            defense: Defense { value: 0.1 },
-            engagement: GladiatorEngagement {
-                status: GladiatorEngagementStatus::Unengaged,
-            },
+    pub fn to_movement(&self) -> (f32, f32) {
+        match self {
+            GladiatorDirection::Down => (0., -1.),
+            GladiatorDirection::DownRight => (1., -1.),
+            GladiatorDirection::Right => (1., 0.),
+            GladiatorDirection::UpRight => (1., 1.),
+            GladiatorDirection::Up => (0., 1.),
+            GladiatorDirection::UpLeft => (-1., 1.),
+            GladiatorDirection::Left => (-1., 0.),
+            GladiatorDirection::DownLeft => (-1., -1.),
         }
     }
 }

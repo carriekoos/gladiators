@@ -1,6 +1,13 @@
 use bevy::{prelude::*, time::FixedTimestep};
 
-use crate::{animation::*, engagements::Engagement, gladiator::*, grid::*, *};
+use crate::{
+    animation::*,
+    engagements::Engagement,
+    gladiator::{gladiator::*, gladiator_components::*},
+    grid::*,
+    player::{player_bundles::*, player_components::*},
+    *, // game_lib
+};
 
 /// Just some notes about where this part of the project is going:
 /// What is the advantage/strategy that the Player has over other Gladiators?
@@ -14,6 +21,10 @@ use crate::{animation::*, engagements::Engagement, gladiator::*, grid::*, *};
 /// The AI doesn't need to be overly sophisticated, but maybe shouldn't
 /// be completely stupid.
 
+///////////////////////////////////////////////////////
+/// Plugin
+///////////////////////////////////////////////////////
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -26,7 +37,13 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+///////////////////////////////////////////////////////
+/// Functions
+///////////////////////////////////////////////////////
+
 /// Spawns a gladiator that is controlled by the player
+// TODO instead of spawning a player, spawn a gladiator and then take control of one of them
+//  as the player?
 fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -168,24 +185,4 @@ fn player_movement(
     }
 
     // For the player, I don't think that I need to do anything else.
-}
-
-#[derive(Component)]
-pub struct Player;
-
-#[derive(Bundle)]
-pub struct PlayerBundle {
-    player: Player,
-    gladiator: GladiatorBundle,
-}
-
-impl PlayerBundle {
-    pub fn new() -> Self {
-        // the default values of the animation will quickly get overwritten
-
-        Self {
-            player: Player,
-            gladiator: GladiatorBundle::new(),
-        }
-    }
 }

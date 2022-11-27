@@ -25,12 +25,42 @@ pub struct GladiatorBundle {
 
 impl GladiatorBundle {
     pub fn new(gladiator_class: Class) -> Self {
-        // the default values of the animation will quickly get overwritten
+        // determine class-specific values
+        // TODO replace with constants in game_lib or maybe have modifier constants that
+        //  multiply by a base value here.
+        // This could consist of a few helper functions to clean it up and tie in the balancing
+        //  hyper parameter for all of the math to generate these values.
+        let (health, attack_speed, damage, defense, speed, class_xp_modifier) =
+            match gladiator_class {
+                Class::Archer => (
+                    10.0,
+                    ATTACK_STEP * 1.1,
+                    2.0,
+                    0.2,
+                    GLADIATOR_BASE_SPEED * 1.2,
+                    1.0,
+                ),
+                Class::Mage => (
+                    8.0,
+                    ATTACK_STEP * 1.2,
+                    1.0,
+                    0.1,
+                    GLADIATOR_BASE_SPEED * 0.8,
+                    1.1,
+                ),
+                Class::Fighter => (
+                    15.0,
+                    ATTACK_STEP * 1.0,
+                    1.0,
+                    0.5,
+                    GLADIATOR_BASE_SPEED * 1.0,
+                    0.9,
+                ),
+            };
+
         Self {
             gladiator: Gladiator,
-            movement: Movement {
-                speed: GLADIATOR_SPEED,
-            },
+            movement: Movement { speed },
             animation: Animation {
                 animation_type: AnimationType::Idle,
                 animation_direction: GladiatorDirection::Down,
@@ -40,11 +70,15 @@ impl GladiatorBundle {
                 ANIMATION_STEP,
                 TimerMode::Repeating,
             )),
-            attack_timer: AttackTimer(Timer::from_seconds(ATTACK_STEP, TimerMode::Repeating)),
-            health: Health { value: 10.0 },
-            level: Level { level: 1, xp: 0. },
-            attack: Attack { damage: 1.0 },
-            defense: Defense { value: 0.1 },
+            attack_timer: AttackTimer(Timer::from_seconds(attack_speed, TimerMode::Repeating)),
+            health: Health { value: health },
+            level: Level {
+                level: 1,
+                xp: 0.,
+                class_xp_modifier,
+            },
+            attack: Attack { damage },
+            defense: Defense { value: defense },
             class: GladiatorClass {
                 class: gladiator_class,
             },

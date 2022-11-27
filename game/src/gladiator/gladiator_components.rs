@@ -2,6 +2,28 @@ use bevy::prelude::*;
 
 use crate::gladiator::gladiator::Class;
 
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(pub Timer);
+
+#[derive(Component, Debug, Clone, Copy)]
+pub struct Attack {
+    pub damage: f32,
+}
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AttackTimer(pub Timer);
+
+#[derive(Component)]
+pub struct Defense {
+    pub value: f32,
+}
+
+#[derive(Component)]
+pub struct Details {
+    pub name: String,
+    pub motivation: String,
+}
+
 #[derive(Component)]
 pub struct Gladiator;
 
@@ -10,29 +32,8 @@ pub struct GladiatorClass {
     pub class: Class,
 }
 
-#[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(pub Timer);
-
-#[derive(Component, Deref, DerefMut)]
-pub struct AttackTimer(pub Timer);
-
-#[derive(Component)]
-pub struct Movement {
-    pub speed: f32,
-}
-
 #[derive(Component)]
 pub struct Health {
-    pub value: f32,
-}
-
-#[derive(Component, Debug, Clone, Copy)]
-pub struct Attack {
-    pub damage: f32,
-}
-
-#[derive(Component)]
-pub struct Defense {
     pub value: f32,
 }
 
@@ -40,6 +41,7 @@ pub struct Defense {
 pub struct Level {
     pub level: usize,
     pub xp: f32,
+    pub class_xp_modifier: f32,
 }
 
 impl Level {
@@ -52,7 +54,7 @@ impl Level {
     pub fn gain_xp(&mut self, xp_earned: f32) {
         // TODO placeholder math
         let level_base: f32 = 3.;
-        let next_level_xp = level_base.powf(self.level as f32);
+        let next_level_xp = level_base.powf(self.level as f32) * self.class_xp_modifier;
         if self.xp + xp_earned >= next_level_xp {
             self.xp += xp_earned - next_level_xp;
             self.level += 1;
@@ -60,4 +62,9 @@ impl Level {
             self.xp += xp_earned;
         }
     }
+}
+
+#[derive(Component)]
+pub struct Movement {
+    pub speed: f32,
 }

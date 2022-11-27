@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{
-    engagements::*,
-    gladiator::{gladiator_components::*, gladiator_movement::*},
-};
+use crate::gladiator::{gladiator_components::*, gladiator_movement::*};
 
 ///////////////////////////////////////////////////////
 /// Plugin
@@ -75,6 +72,7 @@ impl Animation {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub enum AnimationType {
     Idle,
     Walk,

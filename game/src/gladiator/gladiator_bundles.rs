@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     animation::*,
+    gladiator::gladiator::*,
     gladiator::gladiator_components::*,
     gladiator::gladiator_movement::*,
     *, // game_lib
@@ -19,10 +20,11 @@ pub struct GladiatorBundle {
     level: Level,
     attack: Attack,
     defense: Defense,
+    class: GladiatorClass,
 }
 
 impl GladiatorBundle {
-    pub fn new() -> Self {
+    pub fn new(gladiator_class: Class) -> Self {
         // the default values of the animation will quickly get overwritten
         Self {
             gladiator: Gladiator,
@@ -43,6 +45,9 @@ impl GladiatorBundle {
             level: Level { level: 1, xp: 0. },
             attack: Attack { damage: 1.0 },
             defense: Defense { value: 0.1 },
+            class: GladiatorClass {
+                class: gladiator_class,
+            },
         }
     }
 }

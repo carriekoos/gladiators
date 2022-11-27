@@ -1,5 +1,15 @@
 use bevy::prelude::*;
 
+use crate::gladiator::gladiator::Class;
+
+#[derive(Component)]
+pub struct Gladiator;
+
+#[derive(Component)]
+pub struct GladiatorClass {
+    pub class: Class,
+}
+
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(pub Timer);
 
@@ -10,9 +20,6 @@ pub struct AttackTimer(pub Timer);
 pub struct Movement {
     pub speed: f32,
 }
-
-#[derive(Component)]
-pub struct Gladiator;
 
 #[derive(Component)]
 pub struct Health {

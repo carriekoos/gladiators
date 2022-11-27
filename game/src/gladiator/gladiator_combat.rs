@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     animation::*,
     engagements::*,
-    gladiator::{gladiator_components::*, gladiator_events::*},
+    gladiator::{gladiator::*, gladiator_components::*, gladiator_events::*},
     helper_functions::*,
 };
 
@@ -15,13 +15,21 @@ pub fn gladiator_attacks(
         &Attack,
         &mut AttackTimer,
         &mut Animation,
+        &GladiatorClass,
         Entity,
     )>,
 ) {
-    for (engagement, attack, mut attack_timer, mut animation, entity) in &mut query {
+    for (engagement, attack, mut attack_timer, mut animation, class, entity) in &mut query {
+        // determine correct attack animation
+        let combat_animation_type = match &class.class {
+            Class::Archer => AnimationType::Bow,
+            Class::Mage => AnimationType::Staff,
+            Class::Fighter => AnimationType::Sword,
+        };
+
         // initialize animation type if switching from another animation.
-        if !matches!(&animation.animation_type, &AnimationType::Sword) {
-            animation.animation_type = AnimationType::Sword;
+        if animation.animation_type != combat_animation_type {
+            animation.animation_type = combat_animation_type;
             animation.frame_index = 0;
         }
 

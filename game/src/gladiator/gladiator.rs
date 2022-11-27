@@ -114,12 +114,25 @@ fn spawn_one_gladiator(
     asset_server: &Res<AssetServer>,
     texture_atlases: &mut ResMut<Assets<TextureAtlas>>,
 ) {
+    let sprite_file =
+        GLADIATOR_SPRITES[(gladiator_idx % GLADIATOR_SPRITES.len()) as usize].to_string();
+
+    // just a quick hack, doesn't evenly distribute the classes because there are more
+    // warrior and soldier sprite sheets
+    let gladiator_class = if sprite_file.contains("Archer") {
+        Class::Archer
+    } else if sprite_file.contains("Mage") {
+        Class::Mage
+    } else if sprite_file.contains("Soldier") {
+        Class::Fighter
+    } else if sprite_file.contains("Warrior") {
+        Class::Fighter
+    } else {
+        Class::Fighter
+    };
+
     // grab a different spritesheet based on gladiator_idx
-    let path = format!(
-        "{}{}",
-        GLADIATOR_SPRITES_PATH,
-        GLADIATOR_SPRITES[(gladiator_idx % GLADIATOR_SPRITES.len()) as usize]
-    );
+    let path = format!("{}{}", GLADIATOR_SPRITES_PATH, sprite_file);
 
     let texture_handle = asset_server.load(&path);
     // The values used in the next function are specific to the Puny Characters sprite sheets
@@ -144,5 +157,15 @@ fn spawn_one_gladiator(
             transform,
             ..default()
         })
-        .insert(GladiatorBundle::new());
+        .insert(GladiatorBundle::new(gladiator_class));
+}
+
+///////////////////////////////////////////////////////
+/// Structs and Enums
+///////////////////////////////////////////////////////
+
+pub enum Class {
+    Archer,
+    Mage,
+    Fighter,
 }

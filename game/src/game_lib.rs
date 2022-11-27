@@ -38,10 +38,13 @@ pub const GLADIATOR_SPEED: f32 = 2.; // warning, this is related to MOVEMENT_STE
 pub const GLADIATOR_SIZE: f32 = 1.5; // this scales the size of the sprite() - lower once there are many
 pub const GLADIATOR_SPRITES_PATH: &str = "Puny-Characters/";
 // Just starting with a few of the sprites initially
-pub const GLADIATOR_SPRITES: [&str; 5] = [
+pub const GLADIATOR_SPRITES: [&str; 8] = [
+    "Archer-Green.png",
+    "Archer-Purple.png",
+    "Mage-Cyan.png",
     "Soldier-Blue.png",
     "Soldier-Red.png",
     "Soldier-Yellow.png",
-    "Archer-Green.png",
-    "Archer-Purple.png",
+    "Warrior-Blue.png",
+    "Warrior-Red.png",
 ];

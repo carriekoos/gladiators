@@ -46,7 +46,7 @@ fn spawn_player(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = asset_server.load("Puny-Characters/Mage-Cyan.png");
+    let texture_handle = asset_server.load("Puny-Characters/Mage-Red.png");
     // The values used in the next function are specific to the Puny Characters sprite sheets
     let texture_atlas = TextureAtlas::from_grid(
         texture_handle,

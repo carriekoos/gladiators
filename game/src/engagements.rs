@@ -70,19 +70,5 @@ fn engagement_builder(
 
 #[derive(Component)]
 pub struct Engagement {
-    // pub state: EngagementState, // may want this later
     pub target: Entity,
 }
-
-// pub enum EngagementState {
-//     Start,
-//     Active,
-//     End,
-// }
-
-// #[derive(Component)]
-// pub struct Engagement {
-//     pub state: EngagementState,
-//     pub gladiator_a: Entity,
-//     pub gladiator_b: Entity,
-// }

@@ -12,7 +12,7 @@ pub mod player;
 // window size.
 
 /// Grid constants
-pub const GRID_HORIZONTAL_DIVISIONS: f32 = 24.; // vertical divisions calculated by this * (window) height/width
+pub const GRID_HORIZONTAL_DIVISIONS: f32 = 42.; // vertical divisions calculated by this * (window) height/width
 pub const GRID_EVALUATION_STEP: f32 = 1.0 / 30.0;
 
 /// Game window constants

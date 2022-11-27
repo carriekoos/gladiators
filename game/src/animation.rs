@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::gladiator::{gladiator::*, gladiator_components::*};
+use crate::{
+    engagements::*,
+    gladiator::{gladiator_components::*, gladiator_movement::*},
+};
 
 ///////////////////////////////////////////////////////
 /// Plugin
@@ -18,27 +21,21 @@ impl Plugin for AnimationPlugin {
 /// Functions
 ///////////////////////////////////////////////////////
 
-/// TODO we can have disjoint queries here for With/Without<Engagement>
-/// With<> is going to do attack animations that could look at other data
-/// such as EquippedWeapon or something. Without<> is going to perform
-/// the movement logic already present here.
+/// Movement and combat functions affect animation type and frame index
+/// as gladiator actions change. This function displays the correct
+/// animation.
 pub fn animate_sprites(
     time: Res<Time>,
     mut query: Query<
-        (
-            // give me all the entities
-            &mut AnimationTimer,
-            &mut TextureAtlasSprite,
-            &mut Animation,
-        ),
+        (&mut AnimationTimer, &mut TextureAtlasSprite, &mut Animation),
         With<Gladiator>,
     >,
 ) {
     for (mut timer, mut sprite, mut animation) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
-            sprite.index = animation.get_sprite_index(); // this can change it to 0
-            animation.frame_index += 1; // but then without _seeing_ 0, it gets incremented
+            sprite.index = animation.get_sprite_index();
+            animation.frame_index += 1;
             let (start, end) = animation.animation_type.get_animation_type_indices();
 
             if animation.frame_index > end - start {

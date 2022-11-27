@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    animation::*, gladiator::gladiator_components::*, ANIMATION_STEP, ATTACK_STEP, GLADIATOR_SPEED,
+    animation::*,
+    gladiator::gladiator_components::*,
+    gladiator::gladiator_movement::*,
+    *, // game_lib
 };
-
-use super::gladiator::GladiatorDirection;
 
 #[derive(Bundle)]
 pub struct GladiatorBundle {
